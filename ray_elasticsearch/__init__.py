@@ -8,7 +8,8 @@ except PackageNotFoundError:
 
 from functools import cached_property
 from itertools import chain
-from typing import Any, Iterable, Iterator, Literal, Mapping, TypeAlias
+from typing import Any, Iterable, Iterator, Literal, Mapping, Optional, Union
+from typing_extensions import TypeAlias
 
 from pandas import DataFrame
 from pyarrow import Table
@@ -16,7 +17,7 @@ from ray.data import Datasource, ReadTask, Datasink
 from ray.data._internal.execution.interfaces import TaskContext
 from ray.data.block import BlockMetadata, Block
 
-_es_import_error: ImportError | None
+_es_import_error: Optional[ImportError]
 try:
     from elasticsearch import Elasticsearch  # type: ignore
     from elasticsearch.helpers import streaming_bulk  # type: ignore
@@ -43,7 +44,7 @@ if _es_import_error is not None:
 
 class ElasticsearchDatasource(Datasource):
     _index: str
-    _query: Mapping[str, Any] | None
+    _query: Optional[Mapping[str, Any]]
     _keep_alive: str
     _chunk_size: int
     _client_kwargs: dict[str, Any]
@@ -164,24 +165,24 @@ OpType: TypeAlias = Literal["index", "create", "update", "delete"]
 
 class ElasticsearchDatasink(Datasink):
     _index: str
-    _op_type: OpType | None
+    _op_type: Optional[OpType]
     _chunk_size: int
     _max_chunk_bytes: int
     _max_retries: int
-    _initial_backoff: float | int
-    _max_backoff: float | int
+    _initial_backoff: Union[float, int]
+    _max_backoff: Union[float, int]
 
     _client_kwargs: dict[str, Any]
 
     def __init__(
         self,
         index: str,
-        op_type: OpType | None = None,
+        op_type: Optional[OpType] = None,
         chunk_size: int = 500,
         max_chunk_bytes: int = 100 * 1024 * 1024,
         max_retries: int = 0,
-        initial_backoff: float | int = 2,
-        max_backoff: float | int = 600,
+        initial_backoff: Union[float, int] = 2,
+        max_backoff: Union[float, int] = 600,
         client_kwargs: dict[str, Any] = {},
     ) -> None:
         super().__init__()
@@ -251,11 +252,11 @@ class ElasticsearchDatasink(Datasink):
         return True
 
     @property
-    def num_rows_per_write(self) -> int | None:
+    def num_rows_per_write(self) -> Optional[int]:
         return None
 
 
-_es_dsl_import_error: ImportError | None
+_es_dsl_import_error: Optional[ImportError]
 try:
     from elasticsearch_dsl import Document  # type: ignore
     from elasticsearch_dsl.query import Query  # type: ignore
@@ -281,8 +282,8 @@ if _es_dsl_import_error is None:
     class ElasticsearchDslDatasource(ElasticsearchDatasource):
         def __init__(
             self,
-            index: type[Document] | str,
-            query: Query | None = None,
+            index: Union[type[Document], str],
+            query: Optional[Query] = None,
             keep_alive: str = "5m",
             chunk_size: int = 1000,
             client_kwargs: dict[str, Any] = {},
@@ -305,13 +306,13 @@ if _es_dsl_import_error is None:
     class ElasticsearchDslDatasink(ElasticsearchDatasink):
         def __init__(
             self,
-            index: type[Document] | str,
-            op_type: OpType | None = None,
+            index: Union[type[Document], str],
+            op_type: Optional[OpType] = None,
             chunk_size: int = 500,
             max_chunk_bytes: int = 100 * 1024 * 1024,
             max_retries: int = 0,
-            initial_backoff: float | int = 2,
-            max_backoff: float | int = 600,
+            initial_backoff: Union[float, int] = 2,
+            max_backoff: Union[float, int] = 600,
             client_kwargs: dict[str, Any] = {},
         ) -> None:
             super().__init__(
