@@ -19,8 +19,8 @@ from ray.data.block import BlockMetadata, Block
 
 _es_import_error: Optional[ImportError]
 try:
-    from elasticsearch import Elasticsearch  # type: ignore
-    from elasticsearch.helpers import streaming_bulk  # type: ignore
+    from elasticsearch8 import Elasticsearch  # type: ignore
+    from elasticsearch8.helpers import streaming_bulk  # type: ignore
     _es_import_error = None
 except ImportError as e:
     _es_import_error = e
@@ -33,8 +33,8 @@ if _es_import_error is not None:
         _es_import_error = e
 if _es_import_error is not None:
     try:
-        from elasticsearch8 import Elasticsearch  # type: ignore
-        from elasticsearch8.helpers import streaming_bulk  # type: ignore
+        from elasticsearch import Elasticsearch  # type: ignore
+        from elasticsearch.helpers import streaming_bulk  # type: ignore
         _es_import_error = None
     except ImportError as e:
         _es_import_error = e
@@ -258,8 +258,8 @@ class ElasticsearchDatasink(Datasink):
 
 _es_dsl_import_error: Optional[ImportError]
 try:
-    from elasticsearch_dsl import Document  # type: ignore
-    from elasticsearch_dsl.query import Query  # type: ignore
+    from elasticsearch_dsl8 import Document  # type: ignore
+    from elasticsearch_dsl8.query import Query  # type: ignore
     _es_dsl_import_error = None
 except ImportError as e:
     _es_dsl_import_error = e
@@ -272,8 +272,8 @@ if _es_dsl_import_error is not None:
         _es_dsl_import_error = e
 if _es_dsl_import_error is not None:
     try:
-        from elasticsearch8_dsl import Document  # type: ignore
-        from elasticsearch8_dsl.query import Query  # type: ignore
+        from elasticsearch_dsl import Document  # type: ignore
+        from elasticsearch_dsl.query import Query  # type: ignore
         _es_dsl_import_error = None
     except ImportError as e:
         _es_dsl_import_error = e
