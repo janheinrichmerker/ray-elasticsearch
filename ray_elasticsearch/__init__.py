@@ -12,7 +12,7 @@ from typing import Any, Iterable, Iterator, Literal, Mapping, Optional, Union
 from typing_extensions import TypeAlias
 
 from pandas import DataFrame
-from pyarrow import Table
+from pyarrow import Schema, Table
 from ray.data import Datasource, ReadTask, Datasink
 from ray.data._internal.execution.interfaces import TaskContext
 from ray.data.block import BlockMetadata, Block
@@ -48,6 +48,7 @@ class ElasticsearchDatasource(Datasource):
     _keep_alive: str
     _chunk_size: int
     _client_kwargs: dict[str, Any]
+    _schema: Optional[Union[type, Schema]]
 
     def __init__(
         self,
@@ -56,6 +57,7 @@ class ElasticsearchDatasource(Datasource):
         keep_alive: str = "5m",
         chunk_size: int = 1000,
         client_kwargs: dict[str, Any] = {},
+        schema: Optional[Union[type, Schema]] = None,
     ) -> None:
         super().__init__()
         self._index = index
@@ -63,13 +65,14 @@ class ElasticsearchDatasource(Datasource):
         self._keep_alive = keep_alive
         self._chunk_size = chunk_size
         self._client_kwargs = client_kwargs
+        self._schema = schema
 
     @property
     def _elasticsearch(self) -> Elasticsearch:
         return Elasticsearch(**self._client_kwargs)
 
-    def schema(self) -> None:
-        return None
+    def schema(self) -> Optional[Union[type, Schema]]:
+        return self._schema
 
     @cached_property
     def _num_rows(self) -> int:
@@ -102,11 +105,12 @@ class ElasticsearchDatasource(Datasource):
         slice_max: int,
         chunk_size: int,
         client_kwargs: dict[str, Any],
+        schema: Optional[Union[type, Schema]],
     ) -> ReadTask:
         metadata = BlockMetadata(
             num_rows=None,
             size_bytes=None,
-            schema=None,
+            schema=schema,
             input_files=None,
             exec_stats=None,
         )
@@ -151,6 +155,7 @@ class ElasticsearchDatasource(Datasource):
                     slice_max=parallelism,
                     chunk_size=self._chunk_size,
                     client_kwargs=self._client_kwargs,
+                    schema=self._schema,
                 )
                 for i in range(parallelism)
             ]
@@ -290,6 +295,7 @@ if _es_dsl_import_error is None:
             keep_alive: str = "5m",
             chunk_size: int = 1000,
             client_kwargs: dict[str, Any] = {},
+            schema: Optional[Union[type, Schema]] = None,
         ) -> None:
             super().__init__(
                 index=(
@@ -304,6 +310,8 @@ if _es_dsl_import_error is None:
                 keep_alive=keep_alive,
                 chunk_size=chunk_size,
                 client_kwargs=client_kwargs,
+                # TODO: Infer schema from document type if not given.
+                schema=schema,
             )
 
     class ElasticsearchDslDatasink(ElasticsearchDatasink):
