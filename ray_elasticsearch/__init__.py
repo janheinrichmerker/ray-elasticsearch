@@ -64,7 +64,7 @@ class ElasticsearchDatasource(Datasource):
         self._chunk_size = chunk_size
         self._client_kwargs = client_kwargs
 
-    @cached_property
+    @property
     def _elasticsearch(self) -> Elasticsearch:
         return Elasticsearch(**self._client_kwargs)
 
