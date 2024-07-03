@@ -132,7 +132,11 @@ class ElasticsearchDatasource(Datasource):
                     break
                 yield Table.from_pylist(
                     mapping=hits,
-                    schema=schema,
+                    schema=(
+                        schema
+                        if schema is not None and isinstance(schema, Schema)
+                        else None
+                    ),
                 )
                 search_after = max(
                     hit["sort"]
