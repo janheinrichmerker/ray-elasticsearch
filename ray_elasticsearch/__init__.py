@@ -130,7 +130,10 @@ class ElasticsearchDatasource(Datasource):
                 hits = response["hits"]["hits"]
                 if len(hits) == 0:
                     break
-                yield Table.from_pylist(hits)
+                yield Table.from_pylist(
+                    mapping=hits,
+                    schema=schema,
+                )
                 search_after = max(
                     hit["sort"]
                     for hit in hits
