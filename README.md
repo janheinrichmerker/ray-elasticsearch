@@ -38,7 +38,9 @@ from ray_elasticsearch import ElasticsearchDatasource
 
 init()
 source = ElasticsearchDslDatasource(index="test")
-res = read_datasource(source).sum("foo")
+res = read_datasource(source)\
+    .map(lambda x: x["_source"])\
+    .sum("id")
 print(f"Read complete. Sum: {res}")
 ```
 
@@ -72,7 +74,9 @@ from ray_elasticsearch import ElasticsearchDatasink
 
 init()
 sink = ElasticsearchDatasink(index="test")
-range(10_000).write_datasink(sink)
+range(10_000)\
+    .map(lambda x: {"_source": x})\
+    .write_datasink(sink)
 print("Write complete.")
 ```
 
