@@ -124,6 +124,10 @@ sink = ElasticsearchDslDatasink(index=Foo)
 
 Note that, unlike in [Elasticsearch DSL](https://elasticsearch-dsl.readthedocs.io/en/latest/), the results are not parsed as Python objects but instead remain Python dictionaries, due to Ray internally transforming everything in [Arrow format](https://arrow.apache.org/docs/python/index.html).
 
+### Examples
+
+More examples can be found in the [`examples`](examples/) directory.
+
 ## Development
 
 To build this package and contribute to its development you need to install the `build`, `setuptools` and `wheel` packages:
