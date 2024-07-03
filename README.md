@@ -143,11 +143,10 @@ pip install -e .[tests]
 Verify your changes against the test suite to verify.
 
 ```shell
-flake8 .  # Code format
-mypy .    # Static typing
-pylint .  # LINT errors
+ruff check .  # Code format and LINT
+mypy .        # Static typing
 bandit -c pyproject.toml -r .  # Security
-pytest .  # Unit tests
+pytest .      # Unit tests
 ```
 
 Please also add tests for your newly developed code.
