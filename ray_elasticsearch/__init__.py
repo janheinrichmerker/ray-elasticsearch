@@ -77,7 +77,7 @@ class ElasticsearchDatasource(Datasource):
             index=self._index,
             body={
                 "query": self._query,
-            },
+            } if self._query is not None else {},
         )["count"]
 
     def num_rows(self) -> int:
@@ -97,6 +97,7 @@ class ElasticsearchDatasource(Datasource):
     @staticmethod
     def _get_read_task(
         pit_id: str,
+        query: Optional[Mapping[str, Any]],
         slice_id: int,
         slice_max: int,
         chunk_size: int,
@@ -116,6 +117,7 @@ class ElasticsearchDatasource(Datasource):
             while True:
                 response = elasticsearch.search(
                     pit={"id": pit_id},
+                    query=query,
                     slice={"id": slice_id, "max": slice_max},
                     size=chunk_size,
                     search_after=search_after,
@@ -144,6 +146,7 @@ class ElasticsearchDatasource(Datasource):
             return [
                 self._get_read_task(
                     pit_id=pit_id,
+                    query=self._query,
                     slice_id=i,
                     slice_max=parallelism,
                     chunk_size=self._chunk_size,
