@@ -52,7 +52,7 @@ class ElasticsearchDatasource(Datasource):
     def __init__(
         self,
         index: str,
-        query: Mapping[str, Any] | None = None,
+        query: Optional[Mapping[str, Any]] = None,
         keep_alive: str = "5m",
         chunk_size: int = 1000,
         client_kwargs: dict[str, Any] = {},
