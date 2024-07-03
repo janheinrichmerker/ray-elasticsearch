@@ -34,6 +34,10 @@ tests =[
     "pyarrow-stubs~=10.0",
     "ruff~=0.5.0",
 ]
+examples =[
+    "elasticsearch~=8.14",
+    "ray[default]~=2.31",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/heinrichreimer/ray-elasticsearch"
