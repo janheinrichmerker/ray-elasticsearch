@@ -33,11 +33,11 @@ You can read results from a specified index by using an `ElasticsearchDatasource
 
 ```python
 from ray import init
-from ray.data import read_datasink
+from ray.data import read_datasource
 from ray_elasticsearch import ElasticsearchDatasource
 
 init()
-source = ElasticsearchDslDatasource(index="test")
+source = ElasticsearchDatasource(index="test")
 res = read_datasource(source)\
     .map(lambda x: x["_source"])\
     .sum("id")
@@ -47,7 +47,7 @@ print(f"Read complete. Sum: {res}")
 Use an Elasticsearch [query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html) to filter the results:
 
 ```python
-source = ElasticsearchDslDatasource(
+source = ElasticsearchDatasource(
     index="test",
     query={
         "match": {
