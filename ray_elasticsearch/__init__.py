@@ -87,14 +87,16 @@ class ElasticsearchDatasource(Datasource):
         return self._num_rows
 
     @cached_property
-    def _estimated_inmemory_data_size(self) -> int:
+    def _estimated_inmemory_data_size(self) -> int | None:
         stats = self._elasticsearch.indices.stats(
             index=self._index,
             metric="store",
         )
+        if "store" not in stats["_all"]["total"]:
+            return None
         return stats["_all"]["total"]["store"]["total_data_set_size_in_bytes"]
 
-    def estimate_inmemory_data_size(self) -> int:
+    def estimate_inmemory_data_size(self) -> int | None:
         return self._estimated_inmemory_data_size
 
     @staticmethod
