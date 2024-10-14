@@ -1,12 +1,12 @@
 <!-- markdownlint-disable MD041 -->
 [![PyPi](https://img.shields.io/pypi/v/ray-elasticsearch?style=flat-square)](https://pypi.org/project/ray-elasticsearch/)
-[![CI](https://img.shields.io/github/actions/workflow/status/heinrichreimer/ray-elasticsearch/ci.yml?branch=main&style=flat-square)](https://github.com/heinrichreimer/ray-elasticsearch/actions/workflows/ci.yml)
-[![Code coverage](https://img.shields.io/codecov/c/github/heinrichreimer/ray-elasticsearch?style=flat-square)](https://codecov.io/github/heinrichreimer/ray-elasticsearch/)
+[![CI](https://img.shields.io/github/actions/workflow/status/janheinrichmerker/ray-elasticsearch/ci.yml?branch=main&style=flat-square)](https://github.com/janheinrichmerker/ray-elasticsearch/actions/workflows/ci.yml)
+[![Code coverage](https://img.shields.io/codecov/c/github/janheinrichmerker/ray-elasticsearch?style=flat-square)](https://codecov.io/github/janheinrichmerker/ray-elasticsearch/)
 [![Python](https://img.shields.io/pypi/pyversions/ray-elasticsearch?style=flat-square)](https://pypi.org/project/ray-elasticsearch/)
-[![Issues](https://img.shields.io/github/issues/heinrichreimer/ray-elasticsearch?style=flat-square)](https://github.com/heinrichreimer/ray-elasticsearch/issues)
-[![Commit activity](https://img.shields.io/github/commit-activity/m/heinrichreimer/ray-elasticsearch?style=flat-square)](https://github.com/heinrichreimer/ray-elasticsearch/commits)
+[![Issues](https://img.shields.io/github/issues/janheinrichmerker/ray-elasticsearch?style=flat-square)](https://github.com/janheinrichmerker/ray-elasticsearch/issues)
+[![Commit activity](https://img.shields.io/github/commit-activity/m/janheinrichmerker/ray-elasticsearch?style=flat-square)](https://github.com/janheinrichmerker/ray-elasticsearch/commits)
 [![Downloads](https://img.shields.io/pypi/dm/ray-elasticsearch?style=flat-square)](https://pypi.org/project/ray-elasticsearch/)
-[![License](https://img.shields.io/github/license/heinrichreimer/ray-elasticsearch?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/github/license/janheinrichmerker/ray-elasticsearch?style=flat-square)](LICENSE)
 
 # ☀️ ray-elasticsearch
 
@@ -169,7 +169,7 @@ python -m build
 
 ## Support
 
-If you have any problems using this package, please file an [issue](https://github.com/heinrichreimer/ray-elasticsearch/issues/new).
+If you have any problems using this package, please file an [issue](https://github.com/janheinrichmerker/ray-elasticsearch/issues/new).
 We're happy to help!
 
 ## License

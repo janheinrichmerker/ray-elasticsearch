@@ -41,8 +41,8 @@ examples =[
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/heinrichreimer/ray-elasticsearch"
-"Bug Tracker" = "https://github.com/heinrichreimer/ray-elasticsearch/issues"
+"Homepage" = "https://github.com/janheinrichmerker/ray-elasticsearch"
+"Bug Tracker" = "https://github.com/janheinrichmerker/ray-elasticsearch/issues"
 
 [build-system]
 requires = ["setuptools>=50", "setuptools_scm[toml]>=6.2", "wheel"]
