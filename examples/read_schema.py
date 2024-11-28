@@ -1,5 +1,5 @@
 from os import environ
-from pyarrow import field, schema, struct, int32
+from pyarrow import field, schema, int32
 from ray import init
 from ray.data import read_datasource
 from ray_elasticsearch import ElasticsearchDatasource
