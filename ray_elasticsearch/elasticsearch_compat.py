@@ -1,9 +1,5 @@
-from typing import TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias  # noqa: F401
+from typing import Any, Optional
+from typing_extensions import TypeAlias  # type: ignore
 
 
 # Elasticsearch imports (will use major-version-locked package or default):
@@ -60,4 +56,7 @@ if _es_dsl_import_error is not None:
         _es_dsl_import_error = None
     except ImportError as e:
         _es_dsl_import_error = e
+if _es_dsl_import_error is not None:
+    Document: TypeAlias = Any  # type: ignore
+    Query: TypeAlias = Any  # type: ignore
 ELASTICSEARCH_DSL_AVAILABLE = _es_dsl_import_error is None

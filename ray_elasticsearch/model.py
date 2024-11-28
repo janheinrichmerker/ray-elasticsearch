@@ -5,18 +5,14 @@ from typing import (
     Mapping,
     Union,
 )
-
-if TYPE_CHECKING:
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias  # type: ignore
 
 
 from ray_elasticsearch.elasticsearch_compat import ELASTICSEARCH_DSL_AVAILABLE
 
 
 # Determine index and query typing based on Elasticsearch DSL availability.
-if ELASTICSEARCH_DSL_AVAILABLE or TYPE_CHECKING:
+if TYPE_CHECKING or ELASTICSEARCH_DSL_AVAILABLE:
     from ray_elasticsearch.elasticsearch_compat import Document, Query
 
     IndexType: TypeAlias = Union[type[Document], str]
