@@ -33,7 +33,7 @@ tests =[
     "pytest~=8.0",
     "pytest-cov>=5,<7",
     "pyarrow-stubs>=10,<18",
-    "ruff>=0.5,<0.9",
+    "ruff>=0.5,<0.10",
 ]
 examples =[
     "elasticsearch~=8.14",
