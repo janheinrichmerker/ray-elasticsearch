@@ -216,7 +216,6 @@ Verify your changes against the test suite to verify.
 ```shell
 ruff check .  # Code format and LINT
 mypy .        # Static typing
-bandit -c pyproject.toml -r .  # Security
 pytest .      # Unit tests
 ```
 
