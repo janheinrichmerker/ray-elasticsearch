@@ -5,7 +5,6 @@ from typing import (
     Iterable,
     Iterator,
     Mapping,
-    MutableMapping,
     Optional,
     Sequence,
     Union,
@@ -63,7 +62,7 @@ class ElasticsearchDatasource(Datasource):
         return (
             self._index
             if isinstance(self._index, str)
-            else self._index()._get_index(required=True)  # type: ignore
+            else self._index._default_index()
         )
 
     @cached_property
