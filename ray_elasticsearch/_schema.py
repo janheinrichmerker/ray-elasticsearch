@@ -1,4 +1,4 @@
-from typing import cast, Optional, Iterable
+from typing import cast, Optional, Iterable, Union
 from warnings import warn
 
 from pyarrow import (
@@ -27,8 +27,14 @@ from pyarrow import (
 )
 from typing_extensions import TypeAlias, TypedDict, NotRequired  # type: ignore[import]
 
-from ray_elasticsearch._compat import Elasticsearch, Document
-from ray_elasticsearch.model import IndexType
+from ray_elasticsearch._compat import (
+    Elasticsearch,
+    Document,
+    InnerDoc,
+    Field as EsField,
+    Object,
+    Nested,
+)
 
 _META_FIELDS: Iterable[Field] = [
     field("_index", string()),
@@ -42,59 +48,75 @@ _META_FIELDS: Iterable[Field] = [
 _META_SCHEMA = schema(fields=_META_FIELDS)
 
 
-def derive_schema(
-    index: IndexType,
-    index_name: str,
-    elasticsearch: Elasticsearch,
+def complete_schema(
+    base_schema: Schema,
     source_fields: Optional[Iterable[str]] = None,
     meta_fields: Optional[Iterable[str]] = None,
 ) -> Schema:
-    base_schema: Schema
-    if (
-        Document is not NotImplemented
-        and isinstance(index, type)
-        and issubclass(index, Document)
-    ):
-        base_schema = get_schema_from_document(index)
-    else:
-        base_schema = get_schema_from_elasticsearch(elasticsearch, index_name)
-
     source_field_names = (
         set(source_fields) if source_fields is not None else set(base_schema.names)
     )
-    source_schema = schema([base_schema.field(name) for name in source_field_names])
+    source_schema = schema(
+        [
+            base_schema.field(name)
+            for name in source_field_names
+            if name in base_schema.names
+        ]
+    )
 
     meta_field_names = (
         set(meta_fields) if meta_fields is not None else set(_META_SCHEMA.names)
     )
-    meta_schema = schema([_META_SCHEMA.field(name) for name in meta_field_names])
+    meta_schema = schema(
+        [
+            _META_SCHEMA.field(name)
+            for name in meta_field_names
+            if name in _META_SCHEMA.names
+        ]
+    )
 
     return unify_schemas([source_schema, meta_schema])
 
 
-class _ElasticsearchProperty(TypedDict):
+class _PropertyDict(TypedDict):
     type: str
-    properties: NotRequired["_ElasticsearchMapping"]
+    properties: NotRequired["_PropertiesDict"]
 
 
-_ElasticsearchMapping: TypeAlias = dict[str, _ElasticsearchProperty]
+_PropertiesDict: TypeAlias = dict[str, _PropertyDict]
 
 
-def get_schema_from_document(document: type[Document]) -> Schema:
+def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Schema:
     """
     Derive a PyArrow schema from an elasticsearch-dsl Document class.
 
     This works by inspecting the mapping that would be generated for the Document class.
+
+    Known limitations:
+    - In Elasticsearch, any field can also hold arrays of values. Because that is rarely used and we cannot represent unions of values and/or arrays in PyArrow, this function always maps to single values.
+    - For date fields, especially custom date formats, the mapped schema does not guarantee successful parsing of the dates in PyArrow.
     """
-    mapping = document._index.to_dict()["mappings"]["properties"]
-    return elasticsearch_mapping_to_schema(mapping)
+    mapping = document._doc_type.mapping
+    properties = mapping.properties.properties
+    return schema(
+        [
+            field(
+                name=name,
+                type=_elasticsearch_property_to_field_data_type(properties[name]),
+                nullable=not properties[name]._required,
+            )
+            for name in mapping
+        ]
+    )
 
 
-def get_schema_from_elasticsearch(elasticsearch: Elasticsearch, index: str) -> Schema:
+def schema_from_elasticsearch(elasticsearch: Elasticsearch, index: str) -> Schema:
     """
     Fetch the mapping for the given index from Elasticsearch and convert it to a PyArrow schema.
 
-    In Elasticsearch, any field can also hold arrays of values. Because that is rarely used and we cannot represent unions of values and/or arrays in PyArrow, this function always maps to single values.
+    Known limitations:
+    - In Elasticsearch, any field can also hold arrays of values. Because that is rarely used and we cannot represent unions of values and/or arrays in PyArrow, this function always maps to single values.
+    - For date fields, especially custom date formats, the mapped schema does not guarantee successful parsing of the dates in PyArrow.
     """
     mapping_response = elasticsearch.indices.get_mapping(index=index)
     if (
@@ -103,31 +125,39 @@ def get_schema_from_elasticsearch(elasticsearch: Elasticsearch, index: str) -> S
         or "properties" not in mapping_response[index]["mappings"]
     ):
         raise ValueError(f"No mapping found for index '{index}'.")
-    mapping = mapping_response[index]["mappings"]["properties"]
-    return elasticsearch_mapping_to_schema(mapping)
-
-
-def elasticsearch_mapping_to_schema(mapping: _ElasticsearchMapping) -> Schema:
-    """
-    Convert an Elasticsearch mapping to a PyArrow schema.
-
-    Known limitations:
-    - In Elasticsearch, any field can also hold arrays of values. Because that is rarely used and we cannot represent unions of values and/or arrays in PyArrow, this function always maps to single values.
-    - For date fields, especially custom date formats, the mapped schema does not guarantee successful parsing of the dates in PyArrow.
-    """
-    return schema(
-        [_elasticsearch_property_to_field(name, prop) for name, prop in mapping.items()]
+    return _properties_dict_to_schema(
+        mapping=mapping_response[index]["mappings"]["properties"]
     )
 
 
-def _elasticsearch_property_to_field(name: str, prop: _ElasticsearchProperty) -> Field:
-    return field(name, _elasticsearch_property_to_field_data_type(name, prop))
+def _properties_dict_to_schema(mapping: _PropertiesDict) -> Schema:
+    """
+    Determine a PyArrow `Schema` from an Elasticsearch mapping, given as a dictionary of properties.
+    """
+    return schema(
+        [
+            field(
+                name=name,
+                type=_elasticsearch_property_to_field_data_type(prop),
+            )
+            for name, prop in mapping.items()
+        ]
+    )
 
 
 def _elasticsearch_property_to_field_data_type(
-    name: str, prop: _ElasticsearchProperty
+    prop: Union[_PropertyDict, EsField],
 ) -> DataType:
-    type = prop["type"]
+    """
+    Determine the PyArrow `DataType` for a given Elasticsearch property, given either as a dictionary or as an elasticsearch-dsl `Field` instance.
+    """
+
+    prop_dict: dict
+    if isinstance(prop, EsField):
+        prop_dict = cast(dict, prop.to_dict())
+    else:
+        prop_dict = cast(dict, prop)
+    type = prop_dict["type"]
     if type == "alias":
         # https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/field-alias
         raise NotImplementedError("Alias fields are not supported yet.")
@@ -176,7 +206,7 @@ def _elasticsearch_property_to_field_data_type(
     elif type == "version":
         return string()
     elif type == "date":
-        if "format" in prop and all(
+        if "format" in prop_dict and all(
             format
             in (
                 "date",
@@ -202,38 +232,42 @@ def _elasticsearch_property_to_field_data_type(
                 "year_month_day",
                 "yyyy-MM-dd",
             )
-            for format in cast(dict, prop)["format"].split("||")
+            for format in prop_dict["format"].split("||")
         ):
             # If all formats are date-only formats, we can use date32.
             # https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-date-format
             return date32()
         return date64()
     elif type == "dense_vector":
-        if "dims" not in prop:
+        if "dims" not in prop_dict:
             raise ValueError("Dense vector property must have dims.")
         element_type: DataType
-        if "element_type" in prop:
-            if cast(dict, prop)["element_type"] == "float":
+        if "element_type" in prop_dict:
+            if prop_dict["element_type"] == "float":
                 element_type = float32()
-            elif cast(dict, prop)["element_type"] == "byte":
+            elif prop_dict["element_type"] == "byte":
                 element_type = int8()
-            elif cast(dict, prop)["element_type"] == "bit":
+            elif prop_dict["element_type"] == "bit":
                 element_type = bool_()
             else:
                 raise NotImplementedError(
-                    f"Dense vector element type '{cast(dict, prop)['element_type']}' is not supported."
+                    f"Dense vector element type '{prop_dict['element_type']}' is not supported."
                 )
         else:
             element_type = float32()
-        return fixed_shape_tensor(element_type, [cast(dict, prop)["dims"]])
+        return fixed_shape_tensor(element_type, [prop_dict["dims"]])
     elif type == "object":
-        if "properties" not in prop:
+        if isinstance(prop, Object) and prop._doc_class is not None:
+            return struct(schema_from_document(prop._doc_class))
+        if "properties" not in prop_dict:
             raise ValueError("Object property must have properties.")
-        return struct(elasticsearch_mapping_to_schema(prop["properties"]))
+        return struct(_properties_dict_to_schema(prop_dict["properties"]))
     elif type == "nested":
-        if "properties" not in prop:
+        if isinstance(prop, Nested) and prop._doc_class is not None:
+            return list_(struct(schema_from_document(prop._doc_class)))
+        if "properties" not in prop_dict:
             raise ValueError("Object property must have properties.")
-        return list_(struct(elasticsearch_mapping_to_schema(prop["properties"])))
+        return list_(struct(_properties_dict_to_schema(prop_dict["properties"])))
     elif type == "rank_features":
         return map_(string(), float64())
     else:
