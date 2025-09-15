@@ -8,6 +8,7 @@ from typing import (
     MutableMapping,
     Optional,
     Union,
+    Dict,
 )
 
 from pandas import DataFrame
@@ -16,7 +17,7 @@ from ray.data import Datasink
 from ray.data._internal.execution.interfaces import TaskContext
 from ray.data.block import Block
 
-from ray_elasticsearch.elasticsearch_compat import (
+from ray_elasticsearch._compat import (
     Elasticsearch,
     streaming_bulk,
 )
@@ -38,7 +39,7 @@ class ElasticsearchDatasink(Datasink):
 
     def __init__(
         self,
-        index: str,
+        index: IndexType,
         op_type: Optional[OpType] = None,
         chunk_size: int = 500,
         source_fields: Optional[Iterable[str]] = None,
@@ -97,7 +98,7 @@ class ElasticsearchDatasink(Datasink):
             return None
         return set(self._meta_fields)
 
-    def _transform_row(self, row: Mapping[str, Any]) -> Mapping[str, Any]:
+    def _transform_row(self, row: Mapping[str, Any]) -> Dict[str, Any]:
         meta: MutableMapping[str, Any] = {
             f"_{key.removeprefix(self._meta_prefix)}": value
             for key, value in row.items()
@@ -152,6 +153,9 @@ class ElasticsearchDatasink(Datasink):
         )
         for _ in results:
             pass
+
+    def get_name(self) -> str:
+        return f"Elasticsearch({self._index_name})"
 
     @property
     def supports_distributed_writes(self) -> bool:
