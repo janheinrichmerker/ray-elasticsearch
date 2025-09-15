@@ -43,7 +43,14 @@ if _import_error is not None:
 _import_error_dsl: Optional[ImportError] = ImportError()
 if _import_error_dsl is not None:
     try:
-        from elasticsearch8_dsl import Document as Document  # type: ignore[no-redef]
+        from elasticsearch8_dsl import (  # type: ignore[no-redef]
+            Document as Document,
+            InnerDoc as InnerDoc,
+            Field as Field,
+            Object as Object,
+            Nested as Nested,
+            Text as Text,
+        )
         from elasticsearch8_dsl.query import Query as Query  # type: ignore[no-redef]
 
         _import_error_dsl = None
@@ -51,7 +58,14 @@ if _import_error_dsl is not None:
         _import_error_dsl = e
 if _import_error_dsl is not None:
     try:
-        from elasticsearch7_dsl import Document as Document  # type: ignore[no-redef,assignment]
+        from elasticsearch7_dsl import (  # type: ignore[no-redef,assignment]
+            Document as Document,
+            InnerDoc as InnerDoc,
+            Field as Field,
+            Object as Object,
+            Nested as Nested,
+            Text as Text,
+        )
         from elasticsearch7_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
 
         _import_error_dsl = None
@@ -59,7 +73,14 @@ if _import_error_dsl is not None:
         _import_error_dsl = e
 if _import_error_dsl is not None:
     try:
-        from elasticsearch6_dsl import Document as Document  # type: ignore[no-redef,assignment]
+        from elasticsearch6_dsl import (  # type: ignore[no-redef,assignment]
+            Document as Document,
+            InnerDoc as InnerDoc,
+            Field as Field,
+            Object as Object,
+            Nested as Nested,
+            Text as Text,
+        )
         from elasticsearch6_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
 
         _import_error_dsl = None
@@ -67,7 +88,14 @@ if _import_error_dsl is not None:
         _import_error_dsl = e
 if _import_error_dsl is not None:
     try:
-        from elasticsearch_dsl import Document as Document  # type: ignore[no-redef,assignment]
+        from elasticsearch_dsl import (  # type: ignore[no-redef,assignment]
+            Document as Document,
+            InnerDoc as InnerDoc,
+            Field as Field,
+            Object as Object,
+            Nested as Nested,
+            Text as Text,
+        )
         from elasticsearch_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
 
         _import_error_dsl = None
@@ -75,4 +103,9 @@ if _import_error_dsl is not None:
         _import_error_dsl = e
 if _import_error_dsl is not None and not TYPE_CHECKING:
     Document = NotImplemented  # type: ignore
+    InnerDoc = NotImplemented  # type: ignore
     Query = NotImplemented  # type: ignore
+    Field = NotImplemented  # type: ignore
+    Object = NotImplemented  # type: ignore
+    Nested = NotImplemented  # type: ignore
+    Text = NotImplemented  # type: ignore
