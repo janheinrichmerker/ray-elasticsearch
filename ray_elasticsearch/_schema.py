@@ -1,7 +1,6 @@
 from typing import cast, Optional, Iterable
 from warnings import warn
 
-from pydantic_to_pyarrow import get_pyarrow_schema as _get_schema_from_pydantic
 from pyarrow import (
     Schema,
     Field,
@@ -28,20 +27,19 @@ from pyarrow import (
 )
 from typing_extensions import TypeAlias, TypedDict, NotRequired  # type: ignore[import]
 
-from ray_elasticsearch._compat import Elasticsearch, BaseDocument
+from ray_elasticsearch._compat import Elasticsearch, Document
 from ray_elasticsearch.model import IndexType
 
-_META_SCHEMA = schema(
-    [
-        field("_index", string()),
-        field("_type", string()),
-        field("_id", string()),
-        field("_version", int64()),
-        field("_seq_no", int64()),
-        field("_primary_term", int64()),
-        field("_score", float64(), nullable=True),
-    ]
-)
+_META_FIELDS: Iterable[Field] = [
+    field("_index", string()),
+    field("_type", string()),
+    field("_id", string()),
+    field("_version", int64()),
+    field("_seq_no", int64()),
+    field("_primary_term", int64()),
+    field("_score", float64(), nullable=True),
+]
+_META_SCHEMA = schema(fields=_META_FIELDS)
 
 
 def derive_schema(
@@ -53,11 +51,11 @@ def derive_schema(
 ) -> Schema:
     base_schema: Schema
     if (
-        BaseDocument is not NotImplemented
+        Document is not NotImplemented
         and isinstance(index, type)
-        and issubclass(index, BaseDocument)
+        and issubclass(index, Document)
     ):
-        base_schema = _get_schema_from_pydantic(index)  # type: ignore
+        base_schema = get_schema_from_document(index)
     else:
         base_schema = get_schema_from_elasticsearch(elasticsearch, index_name)
 
@@ -80,6 +78,16 @@ class _ElasticsearchProperty(TypedDict):
 
 
 _ElasticsearchMapping: TypeAlias = dict[str, _ElasticsearchProperty]
+
+
+def get_schema_from_document(document: type[Document]) -> Schema:
+    """
+    Derive a PyArrow schema from an elasticsearch-dsl Document class.
+
+    This works by inspecting the mapping that would be generated for the Document class.
+    """
+    mapping = document._index.to_dict()["mappings"]["properties"]
+    return elasticsearch_mapping_to_schema(mapping)
 
 
 def get_schema_from_elasticsearch(elasticsearch: Elasticsearch, index: str) -> Schema:
