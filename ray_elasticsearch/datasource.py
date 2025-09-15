@@ -17,8 +17,12 @@ from ray import __version__ as ray_version
 from ray.data import Datasource, ReadTask
 from ray.data.block import BlockMetadata
 
-from ray_elasticsearch._compat import Elasticsearch, Query
-from ray_elasticsearch._schema import derive_schema
+from ray_elasticsearch._compat import Elasticsearch, Query, Document
+from ray_elasticsearch._schema import (
+    complete_schema,
+    schema_from_document,
+    schema_from_elasticsearch,
+)
 from ray_elasticsearch.model import IndexType, QueryType
 
 
@@ -92,16 +96,29 @@ class ElasticsearchDatasource(Datasource):
     def _safe_schema(self) -> Schema:
         if self._schema is not None:
             return self._schema
+
+        base_schema: Schema
+        if (
+            Document is not NotImplemented
+            and isinstance(self._index, type)
+            and issubclass(self._index, Document)
+        ):
+            base_schema = schema_from_document(
+                document=self._index,
+            )
         else:
-            return derive_schema(
-                index=self._index,
-                index_name=self._index_name,
+            base_schema = schema_from_elasticsearch(
                 elasticsearch=self._elasticsearch,
-                source_fields=self._source_fields,
-                meta_fields=self._meta_fields,
+                index=self._index_name,
             )
 
-    def schema(self) -> Optional[Union[type, Schema]]:
+        return complete_schema(
+            base_schema=base_schema,
+            source_fields=self._source_fields,
+            meta_fields=self._meta_fields,
+        )
+
+    def schema(self) -> Schema:
         return self._safe_schema
 
     @cached_property
