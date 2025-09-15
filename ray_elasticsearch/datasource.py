@@ -9,17 +9,17 @@ from typing import (
     Optional,
     Sequence,
     Union,
+    TYPE_CHECKING,
 )
+from packaging.version import Version
 
 from pyarrow import Schema, Table
+from ray import __version__ as ray_version
 from ray.data import Datasource, ReadTask
 from ray.data.block import BlockMetadata
 
-from ray_elasticsearch.elasticsearch_compat import (
-    Elasticsearch,
-    Query,
-    ELASTICSEARCH_DSL_AVAILABLE,
-)
+from ray_elasticsearch._compat import Elasticsearch, Query
+from ray_elasticsearch._schema import derive_schema
 from ray_elasticsearch.model import IndexType, QueryType
 
 
@@ -30,7 +30,6 @@ class ElasticsearchDatasource(Datasource):
     _chunk_size: int
     _source_fields: Optional[Iterable[str]]
     _meta_fields: Optional[Iterable[str]]
-    _meta_prefix: str
     _schema: Optional[Schema]
     _client_kwargs: dict[str, Any]
 
@@ -42,7 +41,6 @@ class ElasticsearchDatasource(Datasource):
         chunk_size: int = 1000,
         source_fields: Optional[Iterable[str]] = None,
         meta_fields: Optional[Iterable[str]] = None,
-        meta_prefix: str = "_",
         schema: Optional[Schema] = None,
         **client_kwargs,
     ) -> None:
@@ -53,7 +51,6 @@ class ElasticsearchDatasource(Datasource):
         self._chunk_size = chunk_size
         self._source_fields = source_fields
         self._meta_fields = meta_fields
-        self._meta_prefix = meta_prefix
         self._schema = schema
         self._client_kwargs = client_kwargs
 
@@ -85,13 +82,28 @@ class ElasticsearchDatasource(Datasource):
     def _query_dict(self) -> Optional[Mapping[str, Any]]:
         if self._query is None:
             return None
-        elif ELASTICSEARCH_DSL_AVAILABLE and isinstance(self._query, Query):
+        elif Query is not NotImplemented and isinstance(self._query, Query):
             return self._query.to_dict()
-        else:
+        elif isinstance(self._query, dict):
             return self._query
+        else:
+            return None
+
+    @cached_property
+    def _safe_schema(self) -> Schema:
+        if self._schema is not None:
+            return self._schema
+        else:
+            return derive_schema(
+                index=self._index,
+                index_name=self._index_name,
+                elasticsearch=self._elasticsearch,
+                source_fields=self._source_fields,
+                meta_fields=self._meta_fields,
+            )
 
     def schema(self) -> Optional[Union[type, Schema]]:
-        return self._schema
+        return self._safe_schema
 
     @cached_property
     def _num_rows(self) -> int:
@@ -131,33 +143,39 @@ class ElasticsearchDatasource(Datasource):
         chunk_size: int,
         source_field_set: Optional[AbstractSet[str]],
         meta_field_set: Optional[AbstractSet[str]],
-        meta_prefix: str,
-        schema: Optional[Schema],
+        schema: Schema,
         client_kwargs: dict,
     ) -> ReadTask:
-        metadata = BlockMetadata(
-            num_rows=None,
-            size_bytes=None,
-            schema=schema,
-            input_files=None,
-            exec_stats=None,
-        )
+        if Version(ray_version) >= Version("2.47.0") or TYPE_CHECKING:
+            metadata = BlockMetadata(
+                num_rows=None,
+                size_bytes=None,
+                input_files=None,
+                exec_stats=None,
+            )
+        else:
+            metadata = BlockMetadata(  # type: ignore[call-arg]
+                num_rows=None,
+                size_bytes=None,
+                schema=schema,
+                input_files=None,
+                exec_stats=None,
+            )
 
         def transform_row(row: Mapping[str, Any]) -> dict[str, Any]:
-            meta: MutableMapping[str, Any] = {
-                f"{meta_prefix}{key.removeprefix('_')}": value
-                for key, value in row.items()
-                if key.startswith("_")
+            meta: Mapping[str, Any] = {
+                key: value for key, value in row.items() if key.startswith("_")
             }
             if meta_field_set is not None:
                 meta = {
                     key: value
                     for key, value in meta.items()
-                    if key.removeprefix(meta_prefix) in meta_field_set
+                    if key.removeprefix("_") in meta_field_set
                 }
 
+            source_dict: Mapping[str, Any] = row.get("_source", {})
             source: Mapping[str, Any] = {
-                key: value for key, value in row.get("_source", {}).items()
+                key: value for key, value in source_dict.items()
             }
             if source_field_set is not None:
                 source = {
@@ -182,6 +200,8 @@ class ElasticsearchDatasource(Datasource):
                     size=chunk_size,
                     search_after=search_after,
                     sort=["_shard_doc"],
+                    seq_no_primary_term=True,
+                    version=True,
                 )
                 hits: Sequence[Mapping[str, Any]] = response["hits"]["hits"]
                 if len(hits) == 0:
@@ -190,11 +210,7 @@ class ElasticsearchDatasource(Datasource):
                 rows: list[dict[str, Any]] = [transform_row(row) for row in hits]
                 yield Table.from_pylist(
                     mapping=rows,
-                    schema=(
-                        schema
-                        if schema is not None and isinstance(schema, Schema)
-                        else None
-                    ),
+                    schema=schema,
                 )
 
         return ReadTask(
@@ -217,9 +233,8 @@ class ElasticsearchDatasource(Datasource):
                     chunk_size=self._chunk_size,
                     source_field_set=self._source_field_set,
                     meta_field_set=self._meta_field_set,
-                    meta_prefix=self._meta_prefix,
                     client_kwargs=self._client_kwargs,
-                    schema=self._schema,
+                    schema=self._safe_schema,
                 )
                 for i in range(parallelism)
             ]
