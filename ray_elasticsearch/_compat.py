@@ -76,16 +76,3 @@ if _import_error_dsl is not None:
 if _import_error_dsl is not None and not TYPE_CHECKING:
     Document = NotImplemented  # type: ignore
     Query = NotImplemented  # type: ignore
-
-
-# Elasticsearch DSL imports (will use major-version-locked package or default):
-_import_error_pydantic: Optional[ImportError] = ImportError()
-if _import_error_pydantic is not None:
-    try:
-        from elasticsearch_pydantic import BaseDocument as BaseDocument
-
-        _import_error_pydantic = None
-    except ImportError as e:
-        _import_error_pydantic = e
-if _import_error_pydantic is not None and not TYPE_CHECKING:
-    BaseDocument = NotImplemented  # type: ignore
