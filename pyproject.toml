@@ -20,9 +20,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy~=1.26",
     "pyarrow~=20.0",
-    "pydantic-to-pyarrow~=0.1.6",
     "ray[data]~=2.49",
     "typing-extensions~=4.15",
 ]
