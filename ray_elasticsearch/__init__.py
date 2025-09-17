@@ -13,5 +13,9 @@ from ray_elasticsearch._model import (
     SchemaType as SchemaType,
     OpType as OpType,
 )
-from ray_elasticsearch._source import ElasticsearchDatasource as ElasticsearchDatasource
 from ray_elasticsearch._sink import ElasticsearchDatasink as ElasticsearchDatasink
+from ray_elasticsearch._source import ElasticsearchDatasource as ElasticsearchDatasource
+from ray_elasticsearch._utils import (
+    unwrap_document as unwrap_document,
+    unwrap_documents as unwrap_documents,
+)
