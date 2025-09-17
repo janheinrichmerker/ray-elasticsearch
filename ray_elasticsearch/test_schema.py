@@ -43,7 +43,10 @@ def _sort_schema(s: Schema) -> Schema:
     return schema(fields, metadata)
 
 
-def _assert_schema_equals(a: Schema, b: Schema) -> None:
+def _assert_schema_equals(a: Optional[Schema], b: Optional[Schema]) -> None:
+    if a is None or b is None:
+        assert a == b
+        return
     assert _sort_schema(a) == _sort_schema(b)
 
 
