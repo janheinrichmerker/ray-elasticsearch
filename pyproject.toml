@@ -29,7 +29,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 tests = [
-    "elasticsearch-pydantic~=0.1.1",
+    "elasticsearch-pydantic~=1.0",
     "mypy~=1.6",
     "pandas-stubs~=2.0",
     "pyarrow-stubs~=20.0",
@@ -38,12 +38,17 @@ tests = [
     "pyarrow-stubs>=10,<21",
     "ruff>=0.5,<0.12",
 ]
-tests-es6 = ["elasticsearch~=6.0", "elasticsearch-dsl~=6.0"]
-tests-es6x = ["elasticsearch6~=6.0", "elasticsearch6-dsl~=6.0"]
-tests-es7 = ["elasticsearch~=7.0", "elasticsearch-dsl~=7.0"]
-tests-es7x = ["elasticsearch7~=7.0", "elasticsearch7-dsl~=7.0"]
-tests-es8 = ["elasticsearch8~=8.12,<8.12.0", "elasticsearch8-dsl~=8.12,<8.12.0"]
-tests-es8x = [
+tests-es7 = ["elasticsearch~=7.0"]
+tests-es7x = ["elasticsearch7~=7.0"]
+tests-es7d = ["elasticsearch~=7.0", "elasticsearch-dsl~=7.0"]
+tests-es7dx = ["elasticsearch7~=7.0", "elasticsearch7-dsl~=7.0"]
+tests-es8 = ["elasticsearch8~=8.12,<8.12.0"]
+tests-es8x = ["elasticsearch8~=8.12,<8.12.0"]
+tests-es8d = [
+    "elasticsearch8~=8.12,<8.12.0",
+    "elasticsearch8-dsl~=8.12,<8.12.0",
+]
+tests-esd8x = [
     "elasticsearch8~=8.12,<8.12.0",
     "elasticsearch8-dsl~=8.12,<8.12.0",
 ]
