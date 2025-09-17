@@ -93,7 +93,7 @@ class ElasticsearchDatasource(Datasource):
             return None
 
     @cached_property
-    def _safe_schema(self) -> Schema:
+    def _safe_schema(self) -> Optional[Schema]:
         if self._schema is not None and isinstance(self._schema, Schema):
             return self._schema
 
@@ -116,11 +116,13 @@ class ElasticsearchDatasource(Datasource):
             base_schema = schema_from_document(
                 document=self._index,
             )
-        else:
+        elif self._index_name is not None:
             base_schema = schema_from_elasticsearch(
                 elasticsearch=self._elasticsearch,
                 index=self._index_name,
             )
+        else:
+            return None
 
         return complete_schema(
             base_schema=base_schema,
@@ -128,7 +130,7 @@ class ElasticsearchDatasource(Datasource):
             meta_fields=self._meta_fields,
         )
 
-    def schema(self) -> Schema:
+    def schema(self) -> Optional[Schema]:
         return self._safe_schema
 
     @cached_property

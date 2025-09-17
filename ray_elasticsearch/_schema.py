@@ -112,7 +112,7 @@ def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Sch
 
 def schema_from_elasticsearch(
     elasticsearch: Elasticsearch,
-    index: Optional[str],
+    index: str,
 ) -> Schema:
     """
     Fetch the mapping for the given index from Elasticsearch and convert it to a PyArrow schema.
