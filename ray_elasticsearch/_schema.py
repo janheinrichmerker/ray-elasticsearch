@@ -93,7 +93,7 @@ def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Sch
     This works by inspecting the mapping that would be generated for the Document class.
 
     Known limitations:
-    - In Elasticsearch, any field can also hold arrays of values. Because that is rarely used and we cannot represent unions of values and/or arrays in PyArrow, this function always maps to single values.
+    - In Elasticsearch, any field can also hold arrays of values. Unless explicitly defined as `multi=True` in the Elasticsearch DSL model, this function will assume a single value, not a list.
     - For date fields, especially custom date formats, the mapped schema does not guarantee successful parsing of the dates in PyArrow.
     """
     mapping = document._doc_type.mapping
@@ -102,7 +102,7 @@ def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Sch
         [
             field(
                 name=name,
-                type=_elasticsearch_property_to_field_data_type(properties[name]),
+                type=_property_to_field_data_type(properties[name]),
                 nullable=not properties[name]._required,
             )
             for name in mapping
@@ -110,12 +110,15 @@ def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Sch
     )
 
 
-def schema_from_elasticsearch(elasticsearch: Elasticsearch, index: str) -> Schema:
+def schema_from_elasticsearch(
+    elasticsearch: Elasticsearch,
+    index: Optional[str],
+) -> Schema:
     """
     Fetch the mapping for the given index from Elasticsearch and convert it to a PyArrow schema.
 
     Known limitations:
-    - In Elasticsearch, any field can also hold arrays of values. Because that is rarely used and we cannot represent unions of values and/or arrays in PyArrow, this function always maps to single values.
+    - In Elasticsearch, any field can also hold arrays of values. Unless explicitly defined as `multi=True` in the Elasticsearch DSL model, this function will assume a single value, not a list.
     - For date fields, especially custom date formats, the mapped schema does not guarantee successful parsing of the dates in PyArrow.
     """
     mapping_response = elasticsearch.indices.get_mapping(index=index)
@@ -132,21 +135,22 @@ def schema_from_elasticsearch(elasticsearch: Elasticsearch, index: str) -> Schem
 
 def _properties_dict_to_schema(mapping: _PropertiesDict) -> Schema:
     """
-    Determine a PyArrow `Schema` from an Elasticsearch mapping, given as a dictionary of properties.
+    Determine a PyArrow `Schema` from an Elasticsearch mapping, given as a dictionary of properties or Elasticsearch DSL class.
     """
     return schema(
         [
             field(
                 name=name,
-                type=_elasticsearch_property_to_field_data_type(prop),
+                type=_property_to_field_data_type(prop),
             )
             for name, prop in mapping.items()
         ]
     )
 
 
-def _elasticsearch_property_to_field_data_type(
+def _property_to_field_data_type(
     prop: Union[_PropertyDict, EsField],
+    force_single: bool = False,
 ) -> DataType:
     """
     Determine the PyArrow `DataType` for a given Elasticsearch property, given either as a dictionary or as an elasticsearch-dsl `Field` instance.
@@ -154,6 +158,9 @@ def _elasticsearch_property_to_field_data_type(
 
     prop_dict: dict
     if isinstance(prop, EsField):
+        if prop._multi and not isinstance(prop, Nested) and not force_single:
+            return list_(_property_to_field_data_type(prop, force_single=True))
+
         prop_dict = cast(dict, prop.to_dict())
     else:
         prop_dict = cast(dict, prop)
@@ -257,13 +264,13 @@ def _elasticsearch_property_to_field_data_type(
             element_type = float32()
         return fixed_shape_tensor(element_type, [prop_dict["dims"]])
     elif type == "object":
-        if isinstance(prop, Object) and prop._doc_class is not None:
+        if isinstance(prop, Object):
             return struct(schema_from_document(prop._doc_class))
         if "properties" not in prop_dict:
             raise ValueError("Object property must have properties.")
         return struct(_properties_dict_to_schema(prop_dict["properties"]))
     elif type == "nested":
-        if isinstance(prop, Nested) and prop._doc_class is not None:
+        if isinstance(prop, Nested):
             return list_(struct(schema_from_document(prop._doc_class)))
         if "properties" not in prop_dict:
             raise ValueError("Object property must have properties.")
