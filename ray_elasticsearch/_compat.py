@@ -73,4 +73,10 @@ elif _is_installed("elasticsearch-dsl"):
     )
     from elasticsearch_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
 else:
-    raise ImportError("Elasticsearch DSL is not installed.")
+    Document = NotImplemented  # type: ignore
+    InnerDoc = NotImplemented  # type: ignore
+    Field = NotImplemented  # type: ignore
+    Object = NotImplemented  # type: ignore
+    Nested = NotImplemented  # type: ignore
+    Text = NotImplemented  # type: ignore
+    Query = NotImplemented  # type: ignore
