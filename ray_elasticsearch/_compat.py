@@ -21,10 +21,9 @@ if _is_installed("elasticsearch8"):
 elif _is_installed("elasticsearch7"):
     from elasticsearch7 import Elasticsearch as Elasticsearch  # type: ignore[no-redef,assignment]
     from elasticsearch7.helpers import streaming_bulk as streaming_bulk  # type: ignore[no-redef,assignment]
-elif _is_installed("elasticsearch6"):
-    from elasticsearch6 import Elasticsearch as Elasticsearch  # type: ignore[no-redef,assignment]
-    from elasticsearch6.helpers import streaming_bulk as streaming_bulk  # type: ignore[no-redef,assignment]
 elif _is_installed("elasticsearch"):
+    if not _is_version_at_least("elasticsearch", "7.0.0"):
+        raise ImportError("Elasticsearch version 7.0.0 or higher is required.")
     from elasticsearch import Elasticsearch as Elasticsearch  # type: ignore[no-redef,assignment]
     from elasticsearch.helpers import streaming_bulk as streaming_bulk  # type: ignore[no-redef,assignment]
 else:
@@ -52,17 +51,11 @@ elif _is_installed("elasticsearch7-dsl"):
         Text as Text,
     )
     from elasticsearch7_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
-elif _is_installed("elasticsearch6-dsl"):
-    from elasticsearch6_dsl import (  # type: ignore[no-redef,assignment]
-        Document as Document,
-        InnerDoc as InnerDoc,
-        Field as Field,
-        Object as Object,
-        Nested as Nested,
-        Text as Text,
-    )
-    from elasticsearch6_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
 elif _is_installed("elasticsearch-dsl"):
+    if not _is_version_at_least("elasticsearch-dsl", "7.0.0"):
+        raise ImportError("Elasticsearch DSL version 7.0.0 or higher is required.")
+    if _is_version_at_least("elasticsearch-dsl", "8.12.0"):
+        raise ImportError("Elasticsearch DSL version below 8.12.0 is required.")
     from elasticsearch_dsl import (  # type: ignore[no-redef,assignment]
         Document as Document,
         InnerDoc as InnerDoc,
