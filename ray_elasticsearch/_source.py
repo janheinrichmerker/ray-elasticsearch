@@ -171,7 +171,7 @@ class ElasticsearchDatasource(Datasource):
         chunk_size: int,
         source_field_set: Optional[AbstractSet[str]],
         meta_field_set: Optional[AbstractSet[str]],
-        schema: Schema,
+        schema: Optional[Schema],
         client_kwargs: dict,
     ) -> ReadTask:
         if Version(ray_version) >= Version("2.47.0") or TYPE_CHECKING:
@@ -248,7 +248,7 @@ class ElasticsearchDatasource(Datasource):
 
     def get_read_tasks(self, parallelism: int) -> list[ReadTask]:
         pit_id: str = self._elasticsearch.open_point_in_time(
-            index=self._index_name,
+            index=self._index_name if self._index_name is not None else "_all",
             keep_alive=self._keep_alive,
         )["id"]
         try:
