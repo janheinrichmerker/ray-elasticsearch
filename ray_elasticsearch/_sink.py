@@ -97,9 +97,7 @@ class ElasticsearchDatasink(Datasink):
         return set(self._meta_fields)
 
     def _transform_row(self, row: Mapping[str, Any]) -> Dict[str, Any]:
-        meta: MutableMapping[str, Any] = {
-            key: value for key, value in row.items() if key.startswith("_")
-        }
+        meta = {key: value for key, value in row.items() if key.startswith("_")}
         if self._meta_field_set is not None:
             meta = {
                 key: value
@@ -111,9 +109,7 @@ class ElasticsearchDatasink(Datasink):
         if self._op_type is not None:
             meta["_op_type"] = self._op_type
 
-        source: Mapping[str, Any] = {
-            key: value for key, value in row.items() if not key.startswith("_")
-        }
+        source = {key: value for key, value in row.items() if not key.startswith("_")}
         if self._source_field_set is not None:
             source = {
                 key: value
@@ -121,10 +117,16 @@ class ElasticsearchDatasink(Datasink):
                 if key in self._source_field_set
             }
 
-        return {
-            "_source": source,
-            **meta,
-        }
+        if self._op_type is None:
+            return {"_source": source, **meta}
+        elif self._op_type in ("index", "create"):
+            return {"_source": source, **meta}
+        elif self._op_type == "update":
+            return {"doc": source, **meta}
+        elif self._op_type == "delete":
+            return meta
+        else:
+            return {"_source": source, **meta}
 
     def write(
         self,
