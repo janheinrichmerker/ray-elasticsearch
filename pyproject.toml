@@ -42,20 +42,14 @@ tests-es7 = ["elasticsearch~=7.0"]
 tests-es7x = ["elasticsearch7~=7.0"]
 tests-es7d = ["elasticsearch~=7.0", "elasticsearch-dsl~=7.0"]
 tests-es7dx = ["elasticsearch7~=7.0", "elasticsearch7-dsl~=7.0"]
-tests-es8 = ["elasticsearch8~=8.12,<8.12.0"]
-tests-es8x = ["elasticsearch8~=8.12,<8.12.0"]
-tests-es8d = [
-    "elasticsearch8~=8.12,<8.12.0",
-    "elasticsearch8-dsl~=8.12,<8.12.0",
-]
-tests-esd8x = [
-    "elasticsearch8~=8.12,<8.12.0",
-    "elasticsearch8-dsl~=8.12,<8.12.0",
-]
+tests-es8 = ["elasticsearch~=8.0"]
+tests-es8x = ["elasticsearch8~=8.0"]
+tests-es8d = ["elasticsearch~=8.0", "elasticsearch-dsl~=8.0,<8.12.0"]
+tests-esd8x = ["elasticsearch8~=8.0", "elasticsearch8-dsl~=8.0,<8.12.0"]
 tests-pydantic = ["elasticsearch-pydantic~=0.1.1"]
 examples = [
-    "elasticsearch~=8.12,<8.17.1",
-    "elasticsearch-dsl~=8.12,<8.17.1",
+    "elasticsearch~=8.0",
+    "elasticsearch-dsl~=8.0,<8.12.0",
     "ray[default]~=2.49",
 ]
 
