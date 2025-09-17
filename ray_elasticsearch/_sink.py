@@ -5,7 +5,6 @@ from typing import (
     Iterable,
     Iterator,
     Mapping,
-    MutableMapping,
     Optional,
     Union,
     Dict,
