@@ -49,7 +49,6 @@ def _assert_schema_equals(a: Schema, b: Schema) -> None:
 
 def test_given_schema() -> Any:
     datasource = ElasticsearchDatasource(
-        index="test_index",
         schema=schema(
             [
                 field("field1", string(), nullable=False),
@@ -70,33 +69,30 @@ def test_given_schema() -> Any:
 
 def test_dsl_schema() -> Any:
     if Document is NotImplemented:
-        skip("Did not find elasticsearch-dsl package.")
+        skip("Elasticsearch DSL is not installed.")
 
     class _InnerDoc(InnerDoc):
         field1 = Text(required=True)
-        field2 = Text(required=False)
+        field2 = Text(required=False, multi=True)
 
     class _Document(Document):
         field1 = Text(required=True)
-        field2 = Text(required=False)
+        field2 = Text(required=False, multi=True)
         object1 = Object(_InnerDoc, required=True)
         nested1 = Nested(_InnerDoc, required=True)
-
-        class Index:
-            name = "test_index"
 
     datasource = ElasticsearchDatasource(index=_Document)
 
     actual = datasource.schema()
     expected_fields: Iterable[Field] = [
         field("field1", string(), nullable=False),
-        field("field2", string(), nullable=True),
+        field("field2", list_(string()), nullable=True),
         field(
             "object1",
             struct(
                 [
                     field("field1", string(), nullable=False),
-                    field("field2", string(), nullable=True),
+                    field("field2", list_(string()), nullable=True),
                 ]
             ),
             nullable=False,
@@ -107,7 +103,7 @@ def test_dsl_schema() -> Any:
                 struct(
                     [
                         field("field1", string(), nullable=False),
-                        field("field2", string(), nullable=True),
+                        field("field2", list_(string()), nullable=True),
                     ]
                 )
             ),
@@ -127,20 +123,17 @@ def test_dsl_schema() -> Any:
 
 def test_dsl_schema_with_source_fields() -> Any:
     if Document is NotImplemented:
-        skip("Did not find elasticsearch-dsl package.")
+        skip("Elasticsearch DSL is not installed.")
 
     class _InnerDoc(InnerDoc):
         field1 = Text(required=True)
-        field2 = Text(required=False)
+        field2 = Text(required=False, multi=True)
 
     class _Document(Document):
         field1 = Text(required=True)
-        field2 = Text(required=False)
+        field2 = Text(required=False, multi=True)
         object1 = Object(_InnerDoc, required=True)
         nested1 = Nested(_InnerDoc, required=True)
-
-        class Index:
-            name = "test_index"
 
     datasource = ElasticsearchDatasource(
         index=_Document,
@@ -155,7 +148,7 @@ def test_dsl_schema_with_source_fields() -> Any:
             struct(
                 [
                     field("field1", string(), nullable=False),
-                    field("field2", string(), nullable=True),
+                    field("field2", list_(string()), nullable=True),
                 ]
             ),
             nullable=False,
@@ -166,7 +159,7 @@ def test_dsl_schema_with_source_fields() -> Any:
                 struct(
                     [
                         field("field1", string(), nullable=False),
-                        field("field2", string(), nullable=True),
+                        field("field2", list_(string()), nullable=True),
                     ]
                 )
             ),
@@ -184,65 +177,59 @@ def test_dsl_schema_with_source_fields() -> Any:
     _assert_schema_equals(expected, actual)
 
 
-# def test_pydantic_schema() -> Any:
-#     try:
-#         from elasticsearch_pydantic import BaseDocument
-#     except ImportError:
-#         skip("Did not find elasticsearch-pydantic package.")
+def test_pydantic_schema() -> Any:
+    try:
+        from elasticsearch_pydantic import BaseDocument
+    except ImportError:
+        skip("Did not find elasticsearch-pydantic package.")
 
-#     class _Document(BaseDocument):
-#         field1: str
-#         field2: str | None
+    class _Document(BaseDocument):
+        field1: str
+        field2: list[str] | None
 
-#         class Index:
-#             name = "test_index"
+    datasource = ElasticsearchDatasource(index=_Document)
 
-#     datasource = ElasticsearchDatasource(index=_Document)
-
-#     actual = datasource.schema()
-#     expected_fields: Iterable[Field] = [
-#         field("field1", string(), nullable=False),
-#         field("field2", string(), nullable=True),
-#         field("_index", string()),
-#         field("_type", string()),
-#         field("_id", string()),
-#         field("_version", int64()),
-#         field("_seq_no", int64()),
-#         field("_primary_term", int64()),
-#         field("_score", float64(), nullable=True),
-#     ]
-#     expected = schema(expected_fields)
-#     _assert_schema_equals(expected, actual)
+    actual = datasource.schema()
+    expected_fields: Iterable[Field] = [
+        field("field1", string(), nullable=False),
+        field("field2", list_(string()), nullable=True),
+        field("_index", string()),
+        field("_type", string()),
+        field("_id", string()),
+        field("_version", int64()),
+        field("_seq_no", int64()),
+        field("_primary_term", int64()),
+        field("_score", float64(), nullable=True),
+    ]
+    expected = schema(expected_fields)
+    _assert_schema_equals(expected, actual)
 
 
-# def test_pydantic_schema_with_source_fields() -> Any:
-#     try:
-#         from elasticsearch_pydantic import BaseDocument
-#     except ImportError:
-#         skip("Did not find elasticsearch-pydantic package.")
+def test_pydantic_schema_with_source_fields() -> Any:
+    try:
+        from elasticsearch_pydantic import BaseDocument
+    except ImportError:
+        skip("Did not find elasticsearch-pydantic package.")
 
-#     class _Document(BaseDocument):
-#         field1: str
-#         field2: str | None
+    class _Document(BaseDocument):
+        field1: str
+        field2: list[str] | None
 
-#         class Index:
-#             name = "test_index"
+    datasource = ElasticsearchDatasource(
+        index=_Document,
+        source_fields=["field1"],
+    )
 
-#     datasource = ElasticsearchDatasource(
-#         index=_Document,
-#         source_fields=["field1"],
-#     )
-
-#     actual = datasource.schema()
-#     expected_fields: Iterable[Field] = [
-#         field("field1", string(), nullable=False),
-#         field("_index", string()),
-#         field("_type", string()),
-#         field("_id", string()),
-#         field("_version", int64()),
-#         field("_seq_no", int64()),
-#         field("_primary_term", int64()),
-#         field("_score", float64(), nullable=True),
-#     ]
-#     expected = schema(expected_fields)
-#     _assert_schema_equals(expected, actual)
+    actual = datasource.schema()
+    expected_fields: Iterable[Field] = [
+        field("field1", string(), nullable=False),
+        field("_index", string()),
+        field("_type", string()),
+        field("_id", string()),
+        field("_version", int64()),
+        field("_seq_no", int64()),
+        field("_primary_term", int64()),
+        field("_score", float64(), nullable=True),
+    ]
+    expected = schema(expected_fields)
+    _assert_schema_equals(expected, actual)
