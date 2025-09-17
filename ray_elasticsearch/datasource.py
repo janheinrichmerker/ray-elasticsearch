@@ -27,7 +27,7 @@ from ray_elasticsearch.model import IndexType, QueryType
 
 
 class ElasticsearchDatasource(Datasource):
-    _index: IndexType
+    _index: Optional[IndexType]
     _query: Optional[QueryType]
     _keep_alive: str
     _chunk_size: int
@@ -38,7 +38,7 @@ class ElasticsearchDatasource(Datasource):
 
     def __init__(
         self,
-        index: IndexType,
+        index: Optional[IndexType] = None,
         query: Optional[QueryType] = None,
         keep_alive: str = "5m",
         chunk_size: int = 1000,
@@ -62,12 +62,13 @@ class ElasticsearchDatasource(Datasource):
         return Elasticsearch(**self._client_kwargs)
 
     @cached_property
-    def _index_name(self) -> str:
-        return (
-            self._index
-            if isinstance(self._index, str)
-            else self._index._default_index()
-        )
+    def _index_name(self) -> Optional[str]:
+        if self._index is None:
+            return None
+        elif isinstance(self._index, str):
+            return self._index
+        else:
+            return self._index()._get_index(required=True)  # type: ignore
 
     @cached_property
     def _source_field_set(self) -> Optional[AbstractSet[str]]:
@@ -257,6 +258,12 @@ class ElasticsearchDatasource(Datasource):
         except Exception as e:
             self._elasticsearch.close_point_in_time(body={"id": pit_id})
             raise e
+
+    def get_name(self) -> str:
+        if self._index_name is not None:
+            return f"Elasticsearch({self._index_name})"
+        else:
+            return "Elasticsearch"
 
     @property
     def supports_distributed_reads(self) -> bool:
