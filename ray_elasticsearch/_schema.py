@@ -102,7 +102,7 @@ def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Sch
         [
             field(
                 name=name,
-                type=_property_to_field_data_type(properties[name]),
+                type=_field_to_field_data_type(properties[name]),
                 nullable=not properties[name]._required,
             )
             for name in mapping
@@ -148,22 +148,29 @@ def _properties_dict_to_schema(mapping: _PropertiesDict) -> Schema:
     )
 
 
-def _property_to_field_data_type(
-    prop: Union[_PropertyDict, EsField],
+def _field_to_field_data_type(
+    field: EsField,
     force_single: bool = False,
 ) -> DataType:
     """
-    Determine the PyArrow `DataType` for a given Elasticsearch property, given either as a dictionary or as an elasticsearch-dsl `Field` instance.
+    Determine the PyArrow `DataType` for a given Elasticsearch DSL `Field` instance.
+    """
+    if isinstance(field, Nested):
+        return list_(struct(schema_from_document(field._doc_class)))
+    elif field._multi and not force_single:
+        return list_(_field_to_field_data_type(field, force_single=True))
+    elif isinstance(field, Object):
+        return struct(schema_from_document(field._doc_class))
+    else:
+        return _property_to_field_data_type(field.to_dict())
+
+
+def _property_to_field_data_type(prop: _PropertyDict) -> DataType:
+    """
+    Determine the PyArrow `DataType` for a given Elasticsearch property, given as a dictionary.
     """
 
-    prop_dict: dict
-    if isinstance(prop, EsField):
-        if prop._multi and not isinstance(prop, Nested) and not force_single:
-            return list_(_property_to_field_data_type(prop, force_single=True))
-
-        prop_dict = cast(dict, prop.to_dict())
-    else:
-        prop_dict = cast(dict, prop)
+    prop_dict = cast(dict, prop)
     type = prop_dict["type"]
     if type == "alias":
         # https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/field-alias
@@ -264,14 +271,10 @@ def _property_to_field_data_type(
             element_type = float32()
         return fixed_shape_tensor(element_type, [prop_dict["dims"]])
     elif type == "object":
-        if isinstance(prop, Object):
-            return struct(schema_from_document(prop._doc_class))
         if "properties" not in prop_dict:
             raise ValueError("Object property must have properties.")
         return struct(_properties_dict_to_schema(prop_dict["properties"]))
     elif type == "nested":
-        if isinstance(prop, Nested):
-            return list_(struct(schema_from_document(prop._doc_class)))
         if "properties" not in prop_dict:
             raise ValueError("Object property must have properties.")
         return list_(struct(_properties_dict_to_schema(prop_dict["properties"])))
