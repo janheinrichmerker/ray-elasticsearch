@@ -1,4 +1,4 @@
-from typing import Any, Iterable, cast, Iterator
+from typing import Any, Iterable, cast, Iterator, Union, Optional
 
 from pyarrow import (
     schema,
@@ -39,7 +39,7 @@ def _sort_data_type(field: DataType) -> DataType:
 
 def _sort_schema(s: Schema) -> Schema:
     fields = _sort_fields(s)
-    metadata = cast(dict[bytes | str, bytes | str], s.metadata)
+    metadata = cast(dict[Union[bytes, str], Union[bytes, str]], s.metadata)
     return schema(fields, metadata)
 
 
@@ -185,7 +185,7 @@ def test_pydantic_schema() -> Any:
 
     class _Document(BaseDocument):
         field1: str
-        field2: list[str] | None
+        field2: Optional[list[str]]
 
     datasource = ElasticsearchDatasource(index=_Document)
 
@@ -213,7 +213,7 @@ def test_pydantic_schema_with_source_fields() -> Any:
 
     class _Document(BaseDocument):
         field1: str
-        field2: list[str] | None
+        field2: Optional[list[str]]
 
     datasource = ElasticsearchDatasource(
         index=_Document,
