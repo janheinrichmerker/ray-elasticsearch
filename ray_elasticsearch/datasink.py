@@ -25,12 +25,11 @@ from ray_elasticsearch.model import IndexType, OpType
 
 
 class ElasticsearchDatasink(Datasink):
-    _index: IndexType
+    _index: Optional[IndexType]
     _op_type: Optional[OpType]
     _chunk_size: int
     _source_fields: Optional[Iterable[str]]
     _meta_fields: Optional[Iterable[str]]
-    _meta_prefix: str
     _max_chunk_bytes: int
     _max_retries: int
     _initial_backoff: Union[float, int]
@@ -39,12 +38,11 @@ class ElasticsearchDatasink(Datasink):
 
     def __init__(
         self,
-        index: IndexType,
+        index: Optional[IndexType] = None,
         op_type: Optional[OpType] = None,
         chunk_size: int = 500,
         source_fields: Optional[Iterable[str]] = None,
         meta_fields: Optional[Iterable[str]] = None,
-        meta_prefix: str = "_",
         max_chunk_bytes: int = 100 * 1024 * 1024,
         max_retries: int = 0,
         initial_backoff: Union[float, int] = 2,
@@ -57,7 +55,6 @@ class ElasticsearchDatasink(Datasink):
         self._chunk_size = chunk_size
         self._source_fields = source_fields
         self._meta_fields = meta_fields
-        self._meta_prefix = meta_prefix
         self._max_chunk_bytes = max_chunk_bytes
         self._max_retries = max_retries
         self._initial_backoff = initial_backoff
@@ -79,12 +76,13 @@ class ElasticsearchDatasink(Datasink):
         return Elasticsearch(**self._client_kwargs)
 
     @cached_property
-    def _index_name(self) -> str:
-        return (
-            self._index
-            if isinstance(self._index, str)
-            else self._index()._get_index(required=True)  # type: ignore
-        )
+    def _index_name(self) -> Optional[str]:
+        if self._index is None:
+            return None
+        elif isinstance(self._index, str):
+            return self._index
+        else:
+            return self._index()._get_index(required=True)  # type: ignore
 
     @cached_property
     def _source_field_set(self) -> Optional[AbstractSet[str]]:
@@ -100,9 +98,7 @@ class ElasticsearchDatasink(Datasink):
 
     def _transform_row(self, row: Mapping[str, Any]) -> Dict[str, Any]:
         meta: MutableMapping[str, Any] = {
-            f"_{key.removeprefix(self._meta_prefix)}": value
-            for key, value in row.items()
-            if key.startswith(self._meta_prefix)
+            key: value for key, value in row.items() if key.startswith("_")
         }
         if self._meta_field_set is not None:
             meta = {
@@ -110,14 +106,13 @@ class ElasticsearchDatasink(Datasink):
                 for key, value in meta.items()
                 if key.removeprefix("_") in self._meta_field_set
             }
-        meta["_index"] = self._index_name
+        if self._index_name is not None:
+            meta["_index"] = self._index_name
         if self._op_type is not None:
             meta["_op_type"] = self._op_type
 
         source: Mapping[str, Any] = {
-            key: value
-            for key, value in row.items()
-            if not key.startswith(self._meta_prefix)
+            key: value for key, value in row.items() if not key.startswith("_")
         }
         if self._source_field_set is not None:
             source = {
@@ -155,7 +150,10 @@ class ElasticsearchDatasink(Datasink):
             pass
 
     def get_name(self) -> str:
-        return f"Elasticsearch({self._index_name})"
+        if self._index_name is not None:
+            return f"Elasticsearch({self._index_name})"
+        else:
+            return "Elasticsearch"
 
     @property
     def supports_distributed_writes(self) -> bool:
