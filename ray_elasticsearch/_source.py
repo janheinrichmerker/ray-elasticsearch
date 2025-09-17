@@ -7,7 +7,6 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Union,
     TYPE_CHECKING,
 )
 from packaging.version import Version
@@ -23,7 +22,7 @@ from ray_elasticsearch._schema import (
     schema_from_document,
     schema_from_elasticsearch,
 )
-from ray_elasticsearch.model import IndexType, QueryType
+from ray_elasticsearch._model import IndexType, QueryType, SchemaType
 
 
 class ElasticsearchDatasource(Datasource):
@@ -33,7 +32,7 @@ class ElasticsearchDatasource(Datasource):
     _chunk_size: int
     _source_fields: Optional[Iterable[str]]
     _meta_fields: Optional[Iterable[str]]
-    _schema: Optional[Schema]
+    _schema: Optional[SchemaType]
     _client_kwargs: dict[str, Any]
 
     def __init__(
@@ -44,7 +43,7 @@ class ElasticsearchDatasource(Datasource):
         chunk_size: int = 1000,
         source_fields: Optional[Iterable[str]] = None,
         meta_fields: Optional[Iterable[str]] = None,
-        schema: Optional[Schema] = None,
+        schema: Optional[SchemaType] = None,
         **client_kwargs,
     ) -> None:
         super().__init__()
@@ -95,12 +94,22 @@ class ElasticsearchDatasource(Datasource):
 
     @cached_property
     def _safe_schema(self) -> Schema:
-        if self._schema is not None:
+        if self._schema is not None and isinstance(self._schema, Schema):
             return self._schema
 
         base_schema: Schema
         if (
             Document is not NotImplemented
+            and self._schema is not None
+            and isinstance(self._schema, type)
+            and issubclass(self._schema, Document)
+        ):
+            base_schema = schema_from_document(
+                document=self._schema,
+            )
+        if (
+            Document is not NotImplemented
+            and self._index is not None
             and isinstance(self._index, type)
             and issubclass(self._index, Document)
         ):

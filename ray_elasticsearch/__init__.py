@@ -7,12 +7,11 @@ except PackageNotFoundError:
     pass
 
 # Re-export names.
-from ray_elasticsearch.model import (
+from ray_elasticsearch._model import (
     IndexType as IndexType,
     QueryType as QueryType,
+    SchemaType as SchemaType,
     OpType as OpType,
 )
-from ray_elasticsearch.datasource import (
-    ElasticsearchDatasource as ElasticsearchDatasource,
-)
-from ray_elasticsearch.datasink import ElasticsearchDatasink as ElasticsearchDatasink
+from ray_elasticsearch._source import ElasticsearchDatasource as ElasticsearchDatasource
+from ray_elasticsearch._sink import ElasticsearchDatasink as ElasticsearchDatasink

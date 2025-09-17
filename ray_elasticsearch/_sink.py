@@ -21,7 +21,7 @@ from ray_elasticsearch._compat import (
     Elasticsearch,
     streaming_bulk,
 )
-from ray_elasticsearch.model import IndexType, OpType
+from ray_elasticsearch._model import IndexType, OpType
 
 
 class ElasticsearchDatasink(Datasink):
@@ -161,4 +161,4 @@ class ElasticsearchDatasink(Datasink):
 
     @property
     def num_rows_per_write(self) -> Optional[int]:
-        return None
+        return self._chunk_size
