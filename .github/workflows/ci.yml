@@ -46,6 +46,15 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+        elasticsearch:
+          - "7"
+          - "7x"
+          - "7d"
+          - "7dx"
+          - "8"
+          - "8x"
+          - "8d"
+          - "8dx"
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Check-out
@@ -57,7 +66,7 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: 🧰 Install dependencies
-        run: pip install .[tests]
+        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}]
       - name: 🔍 Check Python code
         run: ruff check .
   python-typing:
@@ -70,6 +79,15 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+        elasticsearch:
+          - "7"
+          - "7x"
+          - "7d"
+          - "7dx"
+          - "8"
+          - "8x"
+          - "8d"
+          - "8dx"
     runs-on: ubuntu-latest
     steps:
       - name: "📥 Check-out"
@@ -83,7 +101,7 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: "🧰 Install dependencies"
-        run: pip install .[tests]
+        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}]
       - name: "🔍 Check Python static typing"
         run: mypy .
   python-test:
@@ -96,6 +114,15 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+        elasticsearch:
+          - "7"
+          - "7x"
+          - "7d"
+          - "7dx"
+          - "8"
+          - "8x"
+          - "8d"
+          - "8dx"
     runs-on: ubuntu-latest
     steps:
       - name: "📥 Check-out"
@@ -107,7 +134,7 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: "🧰 Install dependencies"
-        run: pip install .[tests]
+        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}]
       - name: "🧪 Test Python code"
         run: pytest --cov --cov-report=xml .
       - name: "📤 Upload coverage to Codecov"
