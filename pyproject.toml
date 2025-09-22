@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [
     "elastic-transport~=8.0",
-    "pyarrow~=20.0",
+    "pyarrow>=20,<22",
     "ray[data]~=2.49",
     "typing-extensions~=4.15",
 ]
