@@ -55,7 +55,7 @@ tests-es7-pydantic-major = [
 tests-es8 = ["elasticsearch~=8.0"]
 tests-es8-major = ["elasticsearch8~=8.0"]
 tests-es8-dsl = ["elasticsearch~=8.0", "elasticsearch-dsl~=8.0,<8.12.0"]
-tests-es8-dsl-major = ["elasticsearch8~=8.0", "elasticsearch8-dsl~=8.0,<8.12.0"]
+tests-es8-dsl-major = ["elasticsearch8~=8.0", "elasticsearch8-dsl>=8,<9"]
 tests-es8-pydantic = [
     "elasticsearch~=8.0",
     "elasticsearch-dsl~=8.0,<8.12.0",
@@ -63,7 +63,7 @@ tests-es8-pydantic = [
 ]
 tests-es8-pydantic-major = [
     "elasticsearch8~=8.0",
-    "elasticsearch8-dsl~=8.0,<8.12.0",
+    "elasticsearch8-dsl>=8,<9",
     "elasticsearch-pydantic~=1.0",
 ]
 examples = [
