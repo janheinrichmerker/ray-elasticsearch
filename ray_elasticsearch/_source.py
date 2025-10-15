@@ -246,7 +246,11 @@ class ElasticsearchDatasource(Datasource):
             metadata=metadata,
         )
 
-    def get_read_tasks(self, parallelism: int) -> list[ReadTask]:
+    def get_read_tasks(
+        self,
+        parallelism: int,
+        per_task_row_limit: Optional[int] = None,
+    ) -> list[ReadTask]:
         pit_id: str = self._elasticsearch.open_point_in_time(
             index=self._index_name if self._index_name is not None else "_all",
             keep_alive=self._keep_alive,
