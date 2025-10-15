@@ -171,6 +171,9 @@ def _property_to_field_data_type(prop: _PropertyDict) -> DataType:
     """
 
     prop_dict = cast(dict, prop)
+    if "type" not in prop_dict and "properties" in prop_dict:
+        return struct(_properties_dict_to_schema(prop_dict["properties"]))
+
     type = prop_dict["type"]
     if type == "alias":
         # https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/field-alias
@@ -270,10 +273,6 @@ def _property_to_field_data_type(prop: _PropertyDict) -> DataType:
         else:
             element_type = float32()
         return fixed_shape_tensor(element_type, [prop_dict["dims"]])
-    elif type == "object":
-        if "properties" not in prop_dict:
-            raise ValueError("Object property must have properties.")
-        return struct(_properties_dict_to_schema(prop_dict["properties"]))
     elif type == "nested":
         if "properties" not in prop_dict:
             raise ValueError("Object property must have properties.")
