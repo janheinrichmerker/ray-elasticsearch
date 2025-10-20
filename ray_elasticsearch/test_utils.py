@@ -15,13 +15,17 @@ def test_unwrap_document() -> None:
         field = Text(required=True)
 
     def _expected(row: dict[str, Any]) -> dict[str, Any]:
-        return {**row, "custom": row["_source"]["field"]}
+        return {**row, "custom": row["field"]}
 
     @unwrap_document(_Document)
     def _actual(row: dict[str, Any], document: _Document) -> dict[str, Any]:
         return {**row, "custom": document.field}
 
     data = _Document(field="example").to_dict(include_meta=True)
+    data = {
+        **{k: v for k, v in data.items() if k != "_source"},
+        **data["_source"],
+    }
 
     expected = _expected(data)
     actual = _actual(data)
@@ -38,7 +42,7 @@ def test_unwrap_documents() -> None:
 
     def _expected(batch: DataFrame) -> DataFrame:
         batch = batch.copy()
-        batch["custom"] = [row["_source"]["field"] for _, row in batch.iterrows()]
+        batch["custom"] = [row["field"] for _, row in batch.iterrows()]
         return batch
 
     @unwrap_documents(_Document)
@@ -47,11 +51,14 @@ def test_unwrap_documents() -> None:
         batch["custom"] = [document.field for document in documents]
         return batch
 
-    data = DataFrame(
-        [_Document(field=f"example{i}").to_dict(include_meta=True) for i in range(5)]
-    )
+    data = [_Document(field=f"example{i}").to_dict(include_meta=True) for i in range(5)]
+    data = [
+        {**{k: v for k, v in doc.items() if k != "_source"}, **doc["_source"]}
+        for doc in data
+    ]
+    df = DataFrame(data)
 
-    expected = _expected(data)
-    actual = _actual(data)
+    expected = _expected(df)
+    actual = _actual(df)
 
     assert expected.equals(actual)
