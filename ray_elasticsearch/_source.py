@@ -236,11 +236,14 @@ class ElasticsearchDatasource(Datasource):
                     break
                 search_after = max(hit["sort"] for hit in hits)
                 rows: list[dict[str, Any]] = [transform_row(row) for row in hits]
-                yield Table.from_pylist(
-                    mapping=rows,
-                    schema=schema,
-                )
-
+                try:
+                    yield Table.from_pylist(
+                        mapping=rows,
+                        schema=schema,
+                    )
+                except Exception as e:
+                    print(f"Failed to create Table with schema {schema}, from rows: {rows}.")
+                    raise e
         return ReadTask(
             read_fn=iter_blocks,
             metadata=metadata,
