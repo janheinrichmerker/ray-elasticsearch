@@ -36,7 +36,7 @@ tests = [
     "pytest~=8.0",
     "pytest-cov~=7.0",
     "pyarrow-stubs>=10,<21",
-    "ruff~=0.13.0",
+    "ruff>=0.13,<0.15",
 ]
 tests-es7 = ["elasticsearch~=7.0"]
 tests-es7-major = ["elasticsearch7~=7.0"]
