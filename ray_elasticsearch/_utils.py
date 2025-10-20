@@ -10,6 +10,16 @@ from ray_elasticsearch._compat import Document
 if Document is not NotImplemented:
     _D = TypeVar("_D", bound=Document)
 
+    def _unwrap_document(
+        doc_type: type[_D],
+        row: dict[str, Any],
+    ) -> _D:
+        doc = {
+            **{k: v for k, v in row.items() if k.startswith("_")},
+            "_source": {k: v for k, v in row.items() if not k.startswith("_")},
+        }
+        return doc_type.from_es(doc)
+
     def unwrap_document(
         doc_type: type[_D],
     ) -> Callable[
@@ -24,7 +34,7 @@ if Document is not NotImplemented:
             map: Callable[[dict[str, Any], _D], dict[str, Any]],
         ) -> Callable[[dict[str, Any]], dict[str, Any]]:
             def _map(row: dict[str, Any]) -> dict[str, Any]:
-                return map(row, doc_type.from_es(row))
+                return map(row, _unwrap_document(doc_type, row))
 
             return _map
 
@@ -54,7 +64,8 @@ if Document is not NotImplemented:
                 else:
                     df = DataFrame(batch)
                 documents: Sequence[_D] = [
-                    doc_type.from_es(row.to_dict()) for _, row in df.iterrows()
+                    _unwrap_document(doc_type, row.to_dict())
+                    for _, row in df.iterrows()
                 ]
                 return map(batch, documents)
 

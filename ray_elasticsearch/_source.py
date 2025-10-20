@@ -192,7 +192,9 @@ class ElasticsearchDatasource(Datasource):
 
         def transform_row(row: Mapping[str, Any]) -> dict[str, Any]:
             meta: Mapping[str, Any] = {
-                key: value for key, value in row.items() if key.startswith("_")
+                key: value
+                for key, value in row.items()
+                if key.startswith("_") and key != "_source"
             }
             if meta_field_set is not None:
                 meta = {
@@ -242,8 +244,11 @@ class ElasticsearchDatasource(Datasource):
                         schema=schema,
                     )
                 except Exception as e:
-                    print(f"Failed to create Table with schema {schema}, from rows: {rows}.")
+                    print(
+                        f"Failed to create Table with schema {schema}, from rows: {rows}."
+                    )
                     raise e
+
         return ReadTask(
             read_fn=iter_blocks,
             metadata=metadata,
