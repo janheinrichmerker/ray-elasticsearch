@@ -320,3 +320,22 @@ def test_explicit_document_schema_takes_precedence_over_index_name(
     ]
     expected = schema(expected_fields)
     _assert_schema_equals(expected, actual)
+
+
+def test_dsl_schema_with_meta_fields() -> Any:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        field1 = Text(required=True)
+
+    datasource = ElasticsearchDatasource(index=_Document, meta_fields=["id", "score"])
+
+    actual = datasource.schema()
+    expected_fields: list[Field] = [
+        field("field1", string(), nullable=False),
+        field("_id", string()),
+        field("_score", float64(), nullable=True),
+    ]
+    expected = schema(expected_fields)
+    _assert_schema_equals(expected, actual)

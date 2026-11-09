@@ -80,8 +80,11 @@ def complete_schema(
         ]
     )
 
+    # Meta fields are selected without leading underscore (e.g., `id` for `_id`).
     meta_field_names = (
-        set(meta_fields) if meta_fields is not None else set(_META_SCHEMA.names)
+        {f"_{name}" for name in meta_fields}
+        if meta_fields is not None
+        else set(_META_SCHEMA.names)
     )
     meta_schema = schema(
         [
