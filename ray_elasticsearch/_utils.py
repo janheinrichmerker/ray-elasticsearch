@@ -1,10 +1,22 @@
 from typing import TypeVar, Callable, Any, Sequence
 
 from pandas import DataFrame
-from pyarrow import Table
+from pyarrow import Table, array
 from ray.data.block import DataBatch
 
 from ray_elasticsearch._compat import Document
+
+
+def _batch_to_table(batch: DataBatch) -> Table:
+    # Use Arrow as common ground, as it keeps nested lists and objects, and converts missing values (e.g., NaN) to null.
+    if isinstance(batch, Table):
+        return batch
+    elif isinstance(batch, DataFrame):
+        return Table.from_pandas(batch, preserve_index=False)
+    else:
+        return Table.from_pydict(
+            {key: array(column, from_pandas=True) for key, column in batch.items()}
+        )
 
 
 if Document is not NotImplemented:
@@ -56,16 +68,9 @@ if Document is not NotImplemented:
             map: Callable[[_B, Sequence[_D]], _B],
         ) -> Callable[[_B], _B]:
             def _map(batch: _B) -> _B:
-                df: DataFrame
-                if isinstance(batch, Table):
-                    df = batch.to_pandas()
-                elif isinstance(batch, DataFrame):
-                    df = batch
-                else:
-                    df = DataFrame(batch)
                 documents: Sequence[_D] = [
-                    _unwrap_document(doc_type, row.to_dict())
-                    for _, row in df.iterrows()
+                    _unwrap_document(doc_type, row)
+                    for row in _batch_to_table(batch).to_pylist()
                 ]
                 return map(batch, documents)
 
