@@ -293,3 +293,30 @@ def test_elasticsearch_date_schema_unsupported_format(
 
     with raises(NotImplementedError, match=escape(format)):
         datasource.schema()
+
+
+def test_explicit_document_schema_takes_precedence_over_index_name(
+    fake_elasticsearch: type[FakeElasticsearch],
+) -> Any:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        field1 = Text(required=True)
+
+    fake_elasticsearch.mappings = {"properties": {"other": {"type": "keyword"}}}
+    datasource = ElasticsearchDatasource(index="index-alias", schema=_Document)
+
+    actual = datasource.schema()
+    expected_fields: list[Field] = [
+        field("field1", string(), nullable=False),
+        field("_index", string()),
+        field("_type", string()),
+        field("_id", string()),
+        field("_version", int64()),
+        field("_seq_no", int64()),
+        field("_primary_term", int64()),
+        field("_score", float64(), nullable=True),
+    ]
+    expected = schema(expected_fields)
+    _assert_schema_equals(expected, actual)
