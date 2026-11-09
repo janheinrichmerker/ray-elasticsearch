@@ -1,5 +1,6 @@
 from importlib.metadata import metadata, PackageNotFoundError, version
 from packaging.version import Version
+from typing import TYPE_CHECKING
 
 
 def _is_installed(distribution_name: str) -> bool:
@@ -21,7 +22,7 @@ if _is_installed("elasticsearch8"):
 elif _is_installed("elasticsearch7"):
     from elasticsearch7 import Elasticsearch as Elasticsearch  # type: ignore[no-redef,assignment]
     from elasticsearch7.helpers import streaming_bulk as streaming_bulk  # type: ignore[no-redef,assignment]
-elif _is_installed("elasticsearch"):
+elif _is_installed("elasticsearch") or TYPE_CHECKING:
     if not _is_version_at_least("elasticsearch", "7.0.0"):
         raise ImportError("Elasticsearch version 7.0.0 or higher is required.")
     from elasticsearch import Elasticsearch as Elasticsearch  # type: ignore[no-redef,assignment]
@@ -51,7 +52,7 @@ elif _is_installed("elasticsearch7-dsl"):
         Text as Text,
     )
     from elasticsearch7_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
-elif _is_installed("elasticsearch-dsl"):
+elif _is_installed("elasticsearch-dsl") or TYPE_CHECKING:
     if not _is_version_at_least("elasticsearch-dsl", "7.0.0"):
         raise ImportError("Elasticsearch DSL version 7.0.0 or higher is required.")
     if _is_version_at_least("elasticsearch-dsl", "8.12.0"):
