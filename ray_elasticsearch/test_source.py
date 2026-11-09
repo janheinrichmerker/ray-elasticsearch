@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from pytest import mark
+from pytest import mark, raises, skip
 
 from ray_elasticsearch import ElasticsearchDatasource
+from ray_elasticsearch._compat import Document, Text
 from ray_elasticsearch.conftest import FakeElasticsearch, read_table
 
 _UTC = timezone.utc
@@ -92,3 +93,37 @@ def test_read_unparseable_date_fails(
         assert "yesterday" in str(e)
     else:
         raise AssertionError("Expected reading an unparseable date to fail.")
+
+
+def _validating_document(index_name: Optional[str]) -> type[Document]:
+    """
+    Create a document class that fails validation when created without any arguments (like, e.g., Pydantic documents with required fields).
+    """
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+        def __init__(self, **kwargs: Any) -> None:
+            if not kwargs:
+                raise ValueError("Document validation failed: missing field 'title'.")
+            super().__init__(**kwargs)
+
+        class Index:
+            name = index_name
+
+    return _Document
+
+
+def test_validating_document_index_name() -> None:
+    datasource = ElasticsearchDatasource(index=_validating_document("documents"))
+
+    assert datasource.get_name() == "Elasticsearch(documents)"
+
+
+def test_validating_document_without_index_name() -> None:
+    datasource = ElasticsearchDatasource(index=_validating_document(None))
+
+    with raises(ValueError, match="has no index name"):
+        datasource.get_name()
