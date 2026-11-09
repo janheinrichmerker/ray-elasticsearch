@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from functools import cached_property
 from typing import (
     AbstractSet,
@@ -11,7 +12,8 @@ from typing import (
 )
 from packaging.version import Version
 
-from pyarrow import Schema, Table
+from pyarrow import DataType, Schema, Table
+from pyarrow.types import is_list, is_struct, is_timestamp
 from ray import __version__ as ray_version
 from ray.data import Datasource, ReadTask
 from ray.data.block import BlockMetadata
@@ -23,6 +25,18 @@ from ray_elasticsearch._schema import (
     schema_from_elasticsearch,
 )
 from ray_elasticsearch._model import IndexType, QueryType, SchemaType
+
+
+def _parse_date(value: Any) -> datetime:
+    # Numbers are epoch milliseconds, strings ISO 8601 dates, and dates without time zone are in UTC (like in Elasticsearch).
+    if isinstance(value, (int, float)) or (isinstance(value, str) and value.isdigit()):
+        return datetime.fromtimestamp(float(value) / 1000, tz=timezone.utc)
+    if isinstance(value, str) and value.endswith("Z"):
+        value = f"{value[:-1]}+00:00"
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
 
 
 class ElasticsearchDatasource(Datasource):
@@ -190,6 +204,24 @@ class ElasticsearchDatasource(Datasource):
                 exec_stats=None,
             )
 
+        def transform_value(value: Any, data_type: DataType) -> Any:
+            """
+            Recursively transform a value according to the given Arrow data type.
+            
+            For example, dates (e.g., ISO strings) are parsed at timestamp fields, which Arrow cannot convert by itself."""
+            if value is None:
+                return None
+            elif is_timestamp(data_type):
+                return _parse_date(value)
+            elif is_struct(data_type) and isinstance(value, Mapping):
+                return {
+                    field.name: transform_value(value.get(field.name), field.type)
+                    for field in data_type.fields
+                }
+            elif is_list(data_type) and isinstance(value, Sequence):
+                return [transform_value(item, data_type.value_type) for item in value]
+            return value
+
         def transform_row(row: Mapping[str, Any]) -> dict[str, Any]:
             meta: Mapping[str, Any] = {
                 key: value
@@ -203,16 +235,13 @@ class ElasticsearchDatasource(Datasource):
                     if key.removeprefix("_") in meta_field_set
                 }
 
-            source_dict: Mapping[str, Any] = row.get("_source", {})
             source: Mapping[str, Any] = {
-                key: value for key, value in source_dict.items()
+                key: transform_value(value, schema.field(key).type)
+                if schema is not None and key in schema.names
+                else value
+                for key, value in row.get("_source", {}).items()
+                if source_field_set is None or key in source_field_set
             }
-            if source_field_set is not None:
-                source = {
-                    key: value
-                    for key, value in source.items()
-                    if key in source_field_set
-                }
 
             return {
                 **meta,

@@ -155,6 +155,8 @@ source = ElasticsearchDatasource(index=Foo)
 
 Most importantly, this will make the schema reflect the [`required` and `multi` properties](https://elasticsearch-dsl.readthedocs.io/en/latest/api.html#mappings) of the `Document`'s fields to set PyArrow's [`nullable` argument](https://arrow.apache.org/docs/python/generated/pyarrow.field.html) and/or wrap schema field types as [lists](https://arrow.apache.org/docs/python/generated/pyarrow.list_.html).
 
+Date fields (`date` and `date_nanos`) become a UTC PyArrow `timestamp` (with microsecond precision). Only the default format or a single ISO 8601 format (e.g., `strict_date_optional_time`, `strict_date_time_no_millis`, or `strict_date`) or `epoch_millis` is supported. Other formats, including format chains (e.g., `strict_date||epoch_millis`) and custom patterns (e.g., `yyyy/MM/dd`), raise an error. When reading, numbers are parsed as epoch milliseconds and strings as ISO 8601 dates, where dates without time zone are interpreted as UTC (like Elasticsearch does).
+
 Note that, the rows returned by an `ElasticsearchDatasource`, even if using a `Document` class as `index` or `schema`, will still be dictionaries. Due to the way Ray stores the data internally (in [PyArrow format](https://arrow.apache.org/docs/python/index.html)), we cannot directly return instances of the given `Document` class. Use the provided [function decorators](#simplified-data-transformations) to still easily transform the data.
 
 #### Simplified data transformations

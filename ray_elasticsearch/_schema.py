@@ -20,8 +20,7 @@ from pyarrow import (
     int64,
     bool_,
     uint64,
-    date32,
-    date64,
+    timestamp,
     fixed_shape_tensor,
     unify_schemas,
 )
@@ -46,6 +45,23 @@ _META_FIELDS: Iterable[Field] = [
     field("_score", float64(), nullable=True),
 ]
 _META_SCHEMA = schema(fields=_META_FIELDS)
+
+# Date formats whose values can be parsed with `datetime.fromisoformat()` or as epoch milliseconds.
+# https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-date-format
+_DATE_FORMATS = frozenset(
+    (
+        "strict_date_optional_time",
+        "strict_date_optional_time_nanos",
+        "date_optional_time",
+        "strict_date_time",
+        "date_time",
+        "strict_date_time_no_millis",
+        "date_time_no_millis",
+        "strict_date",
+        "date",
+        "epoch_millis",
+    )
+)
 
 
 def complete_schema(
@@ -94,7 +110,7 @@ def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Sch
 
     Known limitations:
     - In Elasticsearch, any field can also hold arrays of values. Unless explicitly defined as `multi=True` in the Elasticsearch DSL model, this function will assume a single value, not a list.
-    - For date fields, especially custom date formats, the mapped schema does not guarantee successful parsing of the dates in PyArrow.
+    - Date fields are only supported with the default format or a single ISO 8601 or `epoch_millis` format.
     """
     mapping = document._doc_type.mapping
     properties = mapping.properties.properties
@@ -119,7 +135,7 @@ def schema_from_elasticsearch(
 
     Known limitations:
     - In Elasticsearch, any field can also hold arrays of values. Unless explicitly defined as `multi=True` in the Elasticsearch DSL model, this function will assume a single value, not a list.
-    - For date fields, especially custom date formats, the mapped schema does not guarantee successful parsing of the dates in PyArrow.
+    - Date fields are only supported with the default format or a single ISO 8601 or `epoch_millis` format.
     """
     mapping_response = elasticsearch.indices.get_mapping(index=index)
     if (
@@ -222,39 +238,12 @@ def _property_to_field_data_type(prop: _PropertyDict) -> DataType:
         return string()
     elif type == "version":
         return string()
-    elif type == "date":
-        if "format" in prop_dict and all(
-            format
-            in (
-                "date",
-                "basic_date",
-                "basic_ordinal_date",
-                "basic_week_date",
-                "ordinal_date",
-                "strict_date",
-                "strict_ordinal_date",
-                "strict_week_date",
-                "strict_weekyear",
-                "strict_weekyear_week",
-                "strict_weekyear_week_day",
-                "strict_year",
-                "strict_year_month",
-                "strict_year_month_day",
-                "week_date",
-                "weekyear",
-                "weekyear_week",
-                "weekyear_week_day",
-                "year",
-                "year_month",
-                "year_month_day",
-                "yyyy-MM-dd",
+    elif type == "date" or type == "date_nanos":
+        if "format" in prop_dict and prop_dict["format"] not in _DATE_FORMATS:
+            raise NotImplementedError(
+                f"Date format '{prop_dict['format']}' is not supported yet."
             )
-            for format in prop_dict["format"].split("||")
-        ):
-            # If all formats are date-only formats, we can use date32.
-            # https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-date-format
-            return date32()
-        return date64()
+        return timestamp("us", tz="UTC")
     elif type == "dense_vector":
         if "dims" not in prop_dict:
             raise ValueError("Dense vector property must have dims.")
