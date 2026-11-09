@@ -107,7 +107,7 @@ class ElasticsearchDatasource(Datasource):
             base_schema = schema_from_document(
                 document=self._schema,
             )
-        if (
+        elif (
             Document is not NotImplemented
             and self._index is not None
             and isinstance(self._index, type)
