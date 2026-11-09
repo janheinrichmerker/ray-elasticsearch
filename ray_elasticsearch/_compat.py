@@ -40,6 +40,7 @@ if _is_installed("elasticsearch8-dsl"):
         Object as Object,
         Nested as Nested,
         Text as Text,
+        Integer as Integer,
     )
     from elasticsearch8_dsl.query import Query as Query  # type: ignore[no-redef]
 elif _is_installed("elasticsearch7-dsl"):
@@ -50,6 +51,7 @@ elif _is_installed("elasticsearch7-dsl"):
         Object as Object,
         Nested as Nested,
         Text as Text,
+        Integer as Integer,
     )
     from elasticsearch7_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
 elif _is_installed("elasticsearch-dsl") or TYPE_CHECKING:
@@ -64,6 +66,7 @@ elif _is_installed("elasticsearch-dsl") or TYPE_CHECKING:
         Object as Object,
         Nested as Nested,
         Text as Text,
+        Integer as Integer,
     )
     from elasticsearch_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
 else:
@@ -73,4 +76,5 @@ else:
     Object = NotImplemented  # type: ignore
     Nested = NotImplemented  # type: ignore
     Text = NotImplemented  # type: ignore
+    Integer = NotImplemented  # type: ignore
     Query = NotImplemented  # type: ignore
