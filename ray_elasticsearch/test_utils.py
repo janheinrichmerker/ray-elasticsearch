@@ -1,10 +1,12 @@
 from typing import Any, Sequence
 
 from pandas import DataFrame
-from pytest import skip
+from pyarrow import Table
+from pytest import mark, skip
+from ray.data.block import BlockAccessor, DataBatch
 
 from ray_elasticsearch import unwrap_document, unwrap_documents
-from ray_elasticsearch._compat import Document, Text
+from ray_elasticsearch._compat import Document, InnerDoc, Integer, Nested, Text
 
 
 def test_unwrap_document() -> None:
@@ -62,3 +64,44 @@ def test_unwrap_documents() -> None:
     actual = _actual(df)
 
     assert expected.equals(actual)
+
+
+@mark.parametrize("batch_format", ["pyarrow", "pandas", "numpy"])
+def test_unwrap_documents_batch_formats(batch_format: str) -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Item(InnerDoc):
+        name = Text(required=True)
+
+    class _Document(Document):
+        title = Text(required=True)
+        items = Nested(_Item)
+        views = Integer()
+
+    # Lists of objects become NumPy arrays, and missing numbers become NaN in pandas and NumPy batches.
+    table = Table.from_pylist(
+        [
+            {
+                "_id": "1",
+                "title": "First",
+                "items": [{"name": "x"}, {"name": "y"}],
+                "views": 3,
+            },
+            {"_id": "2", "title": "Second", "items": [], "views": None},
+        ]
+    )
+    batch = BlockAccessor.for_block(table).to_batch_format(batch_format)
+
+    actual: list[tuple[str, dict[str, Any]]] = []
+
+    @unwrap_documents(_Document)
+    def _map(batch: DataBatch, documents: Sequence[_Document]) -> DataBatch:
+        actual.extend((document.meta.id, document.to_dict()) for document in documents)
+        return batch
+
+    assert _map(batch) is batch
+    assert actual == [
+        ("1", {"title": "First", "items": [{"name": "x"}, {"name": "y"}], "views": 3}),
+        ("2", {"title": "Second"}),
+    ]
