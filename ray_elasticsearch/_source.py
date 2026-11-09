@@ -81,7 +81,13 @@ class ElasticsearchDatasource(Datasource):
         elif isinstance(self._index, str):
             return self._index
         else:
-            return self._index()._get_index(required=True)  # type: ignore
+            # Look up the index name on the class, as instantiating the document could fail validation (e.g., with required Pydantic fields).
+            index_name = self._index._default_index()
+            if index_name is None:
+                raise ValueError(
+                    f"Document class '{self._index.__name__}' has no index name."
+                )
+            return index_name
 
     @cached_property
     def _source_field_set(self) -> Optional[AbstractSet[str]]:
