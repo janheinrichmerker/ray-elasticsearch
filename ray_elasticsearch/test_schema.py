@@ -1,3 +1,4 @@
+from re import escape
 from typing import Any, Iterable, cast, Iterator, Union, Optional
 
 from pyarrow import (
@@ -6,6 +7,7 @@ from pyarrow import (
     string,
     int64,
     float64,
+    timestamp,
     struct,
     list_,
     Schema,
@@ -14,10 +16,11 @@ from pyarrow import (
     StructType,
     ListType,
 )
-from pytest import skip
+from pytest import mark, raises, skip
 
 from ray_elasticsearch import ElasticsearchDatasource
 from ray_elasticsearch._compat import Document, InnerDoc, Text, Object, Nested
+from ray_elasticsearch.conftest import FakeElasticsearch
 
 
 def _sort_fields(fields: Iterable[Field]) -> Iterator[Field]:
@@ -236,3 +239,57 @@ def test_pydantic_schema_with_source_fields() -> Any:
     ]
     expected = schema(expected_fields)
     _assert_schema_equals(expected, actual)
+
+
+@mark.parametrize(
+    "prop",
+    [
+        {"type": "date"},
+        {"type": "date", "format": "strict_date_optional_time"},
+        {"type": "date", "format": "strict_date_time_no_millis"},
+        {"type": "date", "format": "strict_date"},
+        {"type": "date", "format": "epoch_millis"},
+        {"type": "date_nanos"},
+        {"type": "date_nanos", "format": "strict_date_optional_time_nanos"},
+    ],
+)
+def test_elasticsearch_date_schema(
+    fake_elasticsearch: type[FakeElasticsearch],
+    prop: dict[str, Any],
+) -> Any:
+    fake_elasticsearch.mappings = {
+        "properties": {
+            "date": prop,
+            "object": {"properties": {"date": prop}},
+        }
+    }
+    datasource = ElasticsearchDatasource(index="index", meta_fields=[])
+
+    actual = datasource.schema()
+    assert actual is not None
+    assert actual.field("date").type == timestamp("us", tz="UTC")
+    assert actual.field("object").type.field("date").type == timestamp("us", tz="UTC")
+
+
+@mark.parametrize(
+    "format",
+    [
+        "strict_date_optional_time||epoch_millis",
+        "yyyy-MM-dd",
+        "yyyy/MM/dd HH:mm:ss",
+        "epoch_second",
+        "basic_date_time",
+        "strict_week_date",
+    ],
+)
+def test_elasticsearch_date_schema_unsupported_format(
+    fake_elasticsearch: type[FakeElasticsearch],
+    format: str,
+) -> Any:
+    fake_elasticsearch.mappings = {
+        "properties": {"date": {"type": "date", "format": format}}
+    }
+    datasource = ElasticsearchDatasource(index="index")
+
+    with raises(NotImplementedError, match=escape(format)):
+        datasource.schema()
