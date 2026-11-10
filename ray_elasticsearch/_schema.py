@@ -118,7 +118,7 @@ def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Sch
     """
     # The document options are set by the Elasticsearch DSL metaclass, but not declared.
     document_options = cast(DocumentOptions, getattr(document, "_doc_type"))
-    mapping = document_options.mapping 
+    mapping = document_options.mapping
     properties = mapping.properties.properties
     return schema(
         [

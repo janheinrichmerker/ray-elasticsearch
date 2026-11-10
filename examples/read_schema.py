@@ -13,12 +13,13 @@ source = ElasticsearchDatasource(
         environ["ELASTICSEARCH_USERNAME"],
         environ["ELASTICSEARCH_PASSWORD"],
     ),
-    schema=schema([
-        field(name="value", type=int32(), nullable=False)
-    ])
+    schema=schema(
+        [
+            field(name="value", type=int32(), nullable=False),
+        ]
+    ),
 )
 
 print(f"Num rows: {source.num_rows()}")
-res = read_datasource(source, concurrency=100)\
-    .sum("value")
+res = read_datasource(source, concurrency=100).sum("value")
 print(f"Read complete. Sum: {res}")  # 49995000

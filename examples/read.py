@@ -15,6 +15,5 @@ source = ElasticsearchDatasource(
 )
 
 print(f"Num rows: {source.num_rows()}")
-res = read_datasource(source, concurrency=100)\
-    .sum("value")
+res = read_datasource(source, concurrency=100).sum("value")
 print(f"Read complete. Sum: {res}")  # 49995000

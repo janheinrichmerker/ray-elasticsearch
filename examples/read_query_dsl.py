@@ -13,10 +13,9 @@ source = ElasticsearchDatasource(
         environ["ELASTICSEARCH_USERNAME"],
         environ["ELASTICSEARCH_PASSWORD"],
     ),
-    query=Range(value={"lt":  100}),
+    query=Range(value={"lt": 100}),
 )
 
 print(f"Num rows: {source.num_rows()}")
-res = read_datasource(source, concurrency=100)\
-    .sum("value")
+res = read_datasource(source, concurrency=100).sum("value")
 print(f"Read complete. Sum: {res}")  # 4950

@@ -16,8 +16,10 @@ sink = ElasticsearchDatasink(
     meta_fields=["id"],
 )
 
-range(10_000, concurrency=100)\
-    .rename_columns({"id": "value"}, concurrency=100) \
-    .add_column("_id", lambda df: df["value"], concurrency=100) \
+(
+    range(10_000, concurrency=100)
+    .rename_columns({"id": "value"}, concurrency=100)
+    .add_column("_id", lambda df: df["value"], concurrency=100)
     .write_datasink(sink, concurrency=100)
+)
 print("Write complete.")
