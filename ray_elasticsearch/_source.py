@@ -15,7 +15,7 @@ from packaging.version import Version
 from pyarrow import DataType, Schema, Table
 from pyarrow.types import is_list, is_struct, is_timestamp
 from ray import __version__ as ray_version
-from ray.data import Datasource, ReadTask
+from ray.data import DataContext, Datasource, ReadTask
 from ray.data.block import BlockMetadata
 
 from ray_elasticsearch._compat import Elasticsearch, Query, Document
@@ -213,7 +213,7 @@ class ElasticsearchDatasource(Datasource):
         def transform_value(value: Any, data_type: DataType) -> Any:
             """
             Recursively transform a value according to the given Arrow data type.
-            
+
             For example, dates (e.g., ISO strings) are parsed at timestamp fields, which Arrow cannot convert by itself."""
             if value is None:
                 return None
@@ -293,6 +293,7 @@ class ElasticsearchDatasource(Datasource):
         self,
         parallelism: int,
         per_task_row_limit: Optional[int] = None,
+        data_context: Optional[DataContext] = None,
     ) -> list[ReadTask]:
         pit_id: str = self._elasticsearch.open_point_in_time(
             index=self._index_name if self._index_name is not None else "_all",
