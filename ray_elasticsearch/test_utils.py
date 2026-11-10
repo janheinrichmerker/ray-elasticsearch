@@ -40,7 +40,7 @@ def test_unwrap_documents() -> None:
         skip("Elasticsearch DSL is not installed.")
 
     class _Document(Document):
-        field = Text(required=True)
+        field: str = Text(required=True)  # ty: ignore[invalid-assignment]
 
     def _expected(batch: DataFrame) -> DataFrame:
         batch = batch.copy()
