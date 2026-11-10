@@ -182,6 +182,8 @@ def add_custom_field_batch(batch: DataFrame, documents: Sequence[Foo]) -> DataFr
 ds = ds.map_batches(add_custom_field_batch)
 ```
 
+Due to the fixed schema of a Ray `Dataset`, fields that are missing from a document's `_source` are read as `None`. When decoding documents, `None` values are therefore by default treated as missing fields in the unwrap helpers, so that default values (e.g., of Pydantic fields) apply. To keep `None` values as explicit nulls instead, use `null_as_missing=False`.
+
 ### Elasticsearch Pydantic
 
 Instead of the standard Elasticsearch DSL `Document` class, you can also use the `BaseDocument` class from the [`elasticsearch-pydantic`](https://pypi.org/project/elasticsearch-pydantic/) library, to add Pydantic validation and type-checking to your Elasticsearch models. As that library is fully compatible with Elasticsearch DSL, its model classes can be used as a drop-in replacement and still support the more accurate [data schema guessing](#document-mapping-and-index) (from a `BaseDocument` class), or [simplified data transformations](#simplified-data-transformations).
