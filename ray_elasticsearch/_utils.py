@@ -25,7 +25,9 @@ def _null_as_missing(value: Any) -> Any:
     """
     if isinstance(value, Mapping):
         return {
-            key: _null_as_missing(item) for key, item in value.items() if item is not None
+            key: _null_as_missing(item)
+            for key, item in value.items()
+            if item is not None
         }
     elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         return [_null_as_missing(item) for item in value]
