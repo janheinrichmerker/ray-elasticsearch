@@ -18,18 +18,15 @@ jobs:
     steps:
       - name: "📥 Check-out"
         uses: actions/checkout@v5
-      - name: "🧰 Install Python"
-        uses: actions/setup-python@v6
+      - name: "🧰 Install uv and Python"
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: "🧰 Install dependencies"
-        run: pip install build twine
+          cache-dependency-glob: pyproject.toml
       - name: "🏗️ Build Python wheels"
-        run: python -m build
+        run: uv build
       - name: "🧪 Check package bundles"
-        run: twine check dist/*
+        run: uvx twine check dist/*
       - name: "📤 Upload Python wheels"
         uses: actions/upload-artifact@v4
         if: matrix.python == '3.14'
@@ -72,14 +69,14 @@ jobs:
     steps:
       - name: 📥 Check-out
         uses: actions/checkout@v5
-      - name: 🧰 Install Python
-        uses: actions/setup-python@v6
+      - name: "🧰 Install uv and Python"
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: 🧰 Install dependencies
-        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}]
+          activate-environment: true
+          cache-dependency-glob: pyproject.toml
+      - name: "🧰 Install dependencies"
+        run: uv pip install ".[tests,tests-es${{ matrix.elasticsearch }}]"
       - name: 🔍 Check Python code
         run: ruff check .
   python-typing:
@@ -119,14 +116,14 @@ jobs:
     steps:
       - name: "📥 Check-out"
         uses: actions/checkout@v5
-      - name: "🧰 Install Python"
-        uses: actions/setup-python@v6
+      - name: "🧰 Install uv and Python"
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
+          activate-environment: true
+          cache-dependency-glob: pyproject.toml
       - name: "🧰 Install dependencies"
-        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}] ${{ matrix.ray-requirements }}
+        run: uv pip install ".[tests,tests-es${{ matrix.elasticsearch }}]" ${{ matrix.ray-requirements }}
       - name: "🔍 Check Python static typing"
         run: ty check .
   python-test:
@@ -177,14 +174,14 @@ jobs:
     steps:
       - name: "📥 Check-out"
         uses: actions/checkout@v5
-      - name: "🧰 Install Python"
-        uses: actions/setup-python@v6
+      - name: "🧰 Install uv and Python"
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
+          activate-environment: true
+          cache-dependency-glob: pyproject.toml
       - name: "🧰 Install dependencies"
-        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}] ${{ matrix.ray-requirements }}
+        run: uv pip install ".[tests,tests-es${{ matrix.elasticsearch }}]" ${{ matrix.ray-requirements }}
       - name: "🧪 Test Python code"
         run: pytest --cov --cov-report=xml .
       - name: "📤 Upload coverage to Codecov"
