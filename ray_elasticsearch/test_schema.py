@@ -339,3 +339,34 @@ def test_dsl_schema_with_meta_fields() -> Any:
     ]
     expected = schema(expected_fields)
     _assert_schema_equals(expected, actual)
+
+
+def test_dsl_schema_with_inner_document_meta_field_names() -> Any:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    # In inner documents, fields named like meta fields (e.g., `id`) are regular source fields.
+    class _Author(InnerDoc):
+        id = Text(required=True)
+        version = Text()
+
+    class _Document(Document):
+        author = Object(_Author, required=True)
+        reviewers = Nested(_Author, required=True)
+
+    datasource = ElasticsearchDatasource(index=_Document, meta_fields=["id"])
+
+    actual = datasource.schema()
+    author = struct(
+        [
+            field("id", string(), nullable=False),
+            field("version", string(), nullable=True),
+        ]
+    )
+    expected_fields: list[Field] = [
+        field("author", author, nullable=False),
+        field("reviewers", list_(author), nullable=False),
+        field("_id", string()),
+    ]
+    expected = schema(expected_fields)
+    _assert_schema_equals(expected, actual)
