@@ -17,10 +17,12 @@ Use this minimal library if you plan to read or write data from/to [Elasticsearc
 
 ## Installation
 
-Install the package from PyPI:
+Install the package from PyPI, e.g., with [uv](https://docs.astral.sh/uv/):
 
 ```shell
 pip install ray-elasticsearch
+# Or install with uv:
+uv add ray-elasticsearch 
 ```
 
 ## Usage
@@ -242,7 +244,7 @@ More examples can be found in the [`examples`](examples/) directory.
 
 ### Compatibility
 
-This library works fine with any of the following Pip packages installed:
+This library works fine with any of the following PyPI packages installed:
 
 - [`elasticsearch`](https://pypi.org/project/elasticsearch/)
 - [`elasticsearch7`](https://pypi.org/project/elasticsearch7/)
@@ -256,31 +258,26 @@ The `ray-elasticsearch` library will automatically detect if the Elasticsearch D
 
 ## Development
 
-To build this package and contribute to its development you need to install the `build`, `setuptools` and `wheel` packages:
-
-```shell
-pip install build setuptools wheel
-```
-
-(On most systems, these packages are already pre-installed.)
+To build this package and contribute to its development you need to [install uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 ### Development installation
 
-Install package and test dependencies:
+Create and activate a virtual environment, and install the package and test dependencies:
 
 ```shell
-pip install -e .[tests,tests-es7]                # For elasticsearch~=7.0
-pip install -e .[tests,tests-es7-major]          # For elasticsearch7
-pip install -e .[tests,tests-es8]                # For elasticsearch~=8.0
-pip install -e .[tests,tests-es8-major]          # For elasticsearch8
-pip install -e .[tests,tests-es7-dsl]            # For elasticsearch-dsl~=7.0
-pip install -e .[tests,tests-es7-dsl-major]      # For elasticsearch7-dsl
-pip install -e .[tests,tests-es8-dsl]            # For elasticsearch-dsl~=8.0
-pip install -e .[tests,tests-es8-dsl-major]      # For elasticsearch8-dsl
-pip install -e .[tests,tests-es7-pydantic]       # For elasticsearch-pydantic and elasticsearch-dsl~=7.0
-pip install -e .[tests,tests-es7-pydantic-major] # For elasticsearch-pydantic and elasticsearch7-dsl
-pip install -e .[tests,tests-es8-pydantic]       # For elasticsearch-pydantic and elasticsearch-dsl~=8.0
-pip install -e .[tests,tests-es8-pydantic-major] # For elasticsearch-pydantic and elasticsearch8-dsl
+uv venv && source .venv/bin/activate
+uv pip install -e .[tests,tests-es7]                # For elasticsearch~=7.0
+uv pip install -e .[tests,tests-es7-major]          # For elasticsearch7
+uv pip install -e .[tests,tests-es8]                # For elasticsearch~=8.0
+uv pip install -e .[tests,tests-es8-major]          # For elasticsearch8
+uv pip install -e .[tests,tests-es7-dsl]            # For elasticsearch-dsl~=7.0
+uv pip install -e .[tests,tests-es7-dsl-major]      # For elasticsearch7-dsl
+uv pip install -e .[tests,tests-es8-dsl]            # For elasticsearch-dsl~=8.0
+uv pip install -e .[tests,tests-es8-dsl-major]      # For elasticsearch8-dsl
+uv pip install -e .[tests,tests-es7-pydantic]       # For elasticsearch-pydantic and elasticsearch-dsl~=7.0
+uv pip install -e .[tests,tests-es7-pydantic-major] # For elasticsearch-pydantic and elasticsearch7-dsl
+uv pip install -e .[tests,tests-es8-pydantic]       # For elasticsearch-pydantic and elasticsearch-dsl~=8.0
+uv pip install -e .[tests,tests-es8-pydantic-major] # For elasticsearch-pydantic and elasticsearch8-dsl
 ```
 
 ### Testing
@@ -300,7 +297,7 @@ Please also add tests for your newly developed code.
 Wheels for this package can be built with:
 
 ```shell
-python -m build
+uv build
 ```
 
 ## Support
