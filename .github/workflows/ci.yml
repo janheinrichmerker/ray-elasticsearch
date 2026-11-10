@@ -92,19 +92,12 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
+        # Type checkers only see the canonical Elasticsearch (DSL) packages, so check against these.
         elasticsearch:
-          - "7"
-          - "7-major"
           - "7-dsl"
-          - "7-dsl-major"
           - "7-pydantic"
-          - "7-pydantic-major"
-          - "8"
-          - "8-major"
           - "8-dsl"
-          - "8-dsl-major"
           - "8-pydantic"
-          - "8-pydantic-major"
         ray:
           - "minimum"
           - "latest"
@@ -121,11 +114,7 @@ jobs:
           - python: "3.10"
             elasticsearch: "7-pydantic"
           - python: "3.10"
-            elasticsearch: "7-pydantic-major"
-          - python: "3.10"
             elasticsearch: "8-pydantic"
-          - python: "3.10"
-            elasticsearch: "8-pydantic-major"
     runs-on: ubuntu-latest
     steps:
       - name: "📥 Check-out"
@@ -139,7 +128,7 @@ jobs:
       - name: "🧰 Install dependencies"
         run: pip install .[tests,tests-es${{ matrix.elasticsearch }}] ${{ matrix.ray-requirements }}
       - name: "🔍 Check Python static typing"
-        run: mypy .
+        run: ty check .
   python-test:
     name: "🧪 Test Python code"
     strategy:

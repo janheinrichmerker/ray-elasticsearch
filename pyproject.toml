@@ -30,13 +30,13 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 tests = [
-    "mypy~=1.6",
     "pandas-stubs~=2.0",
     "pyarrow-stubs~=20.0",
     "pytest~=9.0",
     "pytest-cov~=7.0",
     "pyarrow-stubs>=10,<21",
     "ruff~=0.13.0",
+    "ty~=0.0.100",
 ]
 tests-es7 = ["elasticsearch~=7.0"]
 tests-es7-major = ["elasticsearch7~=7.0"]
@@ -88,9 +88,12 @@ exclude = ["build", "venv", "examples"]
 [tool.ruff]
 exclude = ["build", "venv"]
 
-[tool.mypy]
+[tool.ty.src]
 exclude = ["build", "venv"]
-ignore_missing_imports = true
+
+[tool.ty.analysis]
+# Only installable on Python 3.11 and newer, and only imported by optional tests.
+allowed-unresolved-imports = ["elasticsearch_pydantic", "elasticsearch_pydantic.**"]
 
 [tool.bandit]
 exclude_dirs = ["build", "venv"]

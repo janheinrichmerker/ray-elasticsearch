@@ -289,7 +289,7 @@ Verify your changes against the test suite to verify.
 
 ```shell
 ruff check .  # Code format and LINT
-mypy .        # Static typing
+ty check .    # Static typing
 pytest .      # Unit tests
 ```
 
