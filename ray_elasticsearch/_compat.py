@@ -44,6 +44,7 @@ if TYPE_CHECKING:
         Text,
         Integer,
     )
+    from elasticsearch_dsl.document import DocumentOptions
     from elasticsearch_dsl.query import Query
 elif _is_installed("elasticsearch8-dsl"):
     if _is_version_at_least("elasticsearch8-dsl", "8.12.0"):
@@ -57,6 +58,7 @@ elif _is_installed("elasticsearch8-dsl"):
         Text,
         Integer,
     )
+    from elasticsearch8_dsl.document import DocumentOptions
     from elasticsearch8_dsl.query import Query
 elif _is_installed("elasticsearch7-dsl"):
     from elasticsearch7_dsl import (
@@ -68,6 +70,7 @@ elif _is_installed("elasticsearch7-dsl"):
         Text,
         Integer,
     )
+    from elasticsearch7_dsl.document import DocumentOptions
     from elasticsearch7_dsl.query import Query
 elif _is_installed("elasticsearch-dsl"):
     if not _is_version_at_least("elasticsearch-dsl", "7.0.0"):
@@ -83,11 +86,13 @@ elif _is_installed("elasticsearch-dsl"):
         Text,
         Integer,
     )
+    from elasticsearch_dsl.document import DocumentOptions
     from elasticsearch_dsl.query import Query
 else:
     Document = NotImplemented
     InnerDoc = NotImplemented
     Field = NotImplemented
+    DocumentOptions = NotImplemented
     Object = NotImplemented
     Nested = NotImplemented
     Text = NotImplemented
@@ -105,4 +110,5 @@ __all__ = [
     "Text",
     "Integer",
     "Query",
+    "DocumentOptions",
 ]
