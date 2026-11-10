@@ -105,3 +105,211 @@ def test_unwrap_documents_batch_formats(batch_format: str) -> None:
         ("1", {"title": "First", "items": [{"name": "x"}, {"name": "y"}], "views": 3}),
         ("2", {"title": "Second"}),
     ]
+
+
+def test_unwrap_document_null_as_missing() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    sources: list[dict[str, Any]] = []
+
+    class _Item(InnerDoc):
+        name = Text(required=True)
+        note = Text()
+
+    class _Document(Document):
+        title = Text(required=True)
+        items = Nested(_Item)
+        views = Integer()
+
+        @classmethod
+        def from_es(cls, hit: Any) -> Any:
+            # Record the decoded source, as nulls would, e.g., prevent Pydantic defaults.
+            sources.append(hit["_source"])
+            return super().from_es(hit)
+
+    # Fields missing from the `_source` are read as nulls due to the fixed table schema.
+    table = Table.from_pylist(
+        [
+            {
+                "_id": "1",
+                "title": "First",
+                "items": [{"name": "x", "note": "y"}],
+                "views": 3,
+            },
+            {
+                "_id": "2",
+                "title": "Second",
+                "items": [{"name": "z", "note": None}],
+                "views": None,
+            },
+        ]
+    )
+
+    @unwrap_document(_Document, null_as_missing=True)
+    def _map(row: dict[str, Any], document: _Document) -> dict[str, Any]:
+        return row
+
+    for row in table.to_pylist():
+        _map(row)
+
+    assert sources == [
+        {"title": "First", "items": [{"name": "x", "note": "y"}], "views": 3},
+        {"title": "Second", "items": [{"name": "z"}]},
+    ]
+
+
+@mark.parametrize("batch_format", ["pyarrow", "pandas", "numpy"])
+def test_unwrap_documents_null_as_missing(batch_format: str) -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    sources: list[dict[str, Any]] = []
+
+    class _Item(InnerDoc):
+        name = Text(required=True)
+        note = Text()
+
+    class _Document(Document):
+        title = Text(required=True)
+        items = Nested(_Item)
+        views = Integer()
+
+        @classmethod
+        def from_es(cls, hit: Any) -> Any:
+            # Record the decoded source, as nulls would, e.g., prevent Pydantic defaults.
+            sources.append(hit["_source"])
+            return super().from_es(hit)
+
+    # Fields missing from the `_source` are read as nulls due to the fixed table schema.
+    table = Table.from_pylist(
+        [
+            {
+                "_id": "1",
+                "title": "First",
+                "items": [{"name": "x", "note": "y"}],
+                "views": 3,
+            },
+            {
+                "_id": "2",
+                "title": "Second",
+                "items": [{"name": "z", "note": None}],
+                "views": None,
+            },
+        ]
+    )
+
+    @unwrap_documents(_Document, null_as_missing=True)
+    def _map(batch: DataBatch, documents: Sequence[_Document]) -> DataBatch:
+        return batch
+
+    _map(BlockAccessor.for_block(table).to_batch_format(batch_format))
+
+    assert sources == [
+        {"title": "First", "items": [{"name": "x", "note": "y"}], "views": 3},
+        {"title": "Second", "items": [{"name": "z"}]},
+    ]
+
+
+def test_unwrap_document_null_as_none() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    sources: list[dict[str, Any]] = []
+
+    class _Item(InnerDoc):
+        name = Text(required=True)
+        note = Text()
+
+    class _Document(Document):
+        title = Text(required=True)
+        items = Nested(_Item)
+        views = Integer()
+
+        @classmethod
+        def from_es(cls, hit: Any) -> Any:
+            # Record the decoded source, as nulls would, e.g., prevent Pydantic defaults.
+            sources.append(hit["_source"])
+            return super().from_es(hit)
+
+    # Fields missing from the `_source` are read as nulls due to the fixed table schema.
+    table = Table.from_pylist(
+        [
+            {
+                "_id": "1",
+                "title": "First",
+                "items": [{"name": "x", "note": "y"}],
+                "views": 3,
+            },
+            {
+                "_id": "2",
+                "title": "Second",
+                "items": [{"name": "z", "note": None}],
+                "views": None,
+            },
+        ]
+    )
+
+    @unwrap_document(_Document, null_as_missing=False)
+    def _map(row: dict[str, Any], document: _Document) -> dict[str, Any]:
+        return row
+
+    for row in table.to_pylist():
+        _map(row)
+
+    assert sources == [
+        {"title": "First", "items": [{"name": "x", "note": "y"}], "views": 3},
+        {"title": "Second", "items": [{"name": "z", "note": None}], "views": None},
+    ]
+
+
+@mark.parametrize("batch_format", ["pyarrow", "pandas", "numpy"])
+def test_unwrap_documents_null_as_none(batch_format: str) -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    sources: list[dict[str, Any]] = []
+
+    class _Item(InnerDoc):
+        name = Text(required=True)
+        note = Text()
+
+    class _Document(Document):
+        title = Text(required=True)
+        items = Nested(_Item)
+        views = Integer()
+
+        @classmethod
+        def from_es(cls, hit: Any) -> Any:
+            # Record the decoded source, as nulls would, e.g., prevent Pydantic defaults.
+            sources.append(hit["_source"])
+            return super().from_es(hit)
+
+    # Fields missing from the `_source` are read as nulls due to the fixed table schema.
+    table = Table.from_pylist(
+        [
+            {
+                "_id": "1",
+                "title": "First",
+                "items": [{"name": "x", "note": "y"}],
+                "views": 3,
+            },
+            {
+                "_id": "2",
+                "title": "Second",
+                "items": [{"name": "z", "note": None}],
+                "views": None,
+            },
+        ]
+    )
+
+    @unwrap_documents(_Document, null_as_missing=False)
+    def _map(batch: DataBatch, documents: Sequence[_Document]) -> DataBatch:
+        return batch
+
+    _map(BlockAccessor.for_block(table).to_batch_format(batch_format))
+
+    assert sources == [
+        {"title": "First", "items": [{"name": "x", "note": "y"}], "views": 3},
+        {"title": "Second", "items": [{"name": "z", "note": None}], "views": None},
+    ]
