@@ -18,7 +18,7 @@ from ray_elasticsearch._compat import (
     streaming_bulk,
 )
 from ray_elasticsearch._model import IndexType, OpType
-from ray_elasticsearch._utils import _batch_to_table
+from ray_elasticsearch._utils import _batch_to_table, _index_name
 
 
 class ElasticsearchDatasink(Datasink):
@@ -64,12 +64,7 @@ class ElasticsearchDatasink(Datasink):
 
     @cached_property
     def _index_name(self) -> Optional[str]:
-        if self._index is None:
-            return None
-        elif isinstance(self._index, str):
-            return self._index
-        else:
-            return self._index()._get_index(required=True)  # type: ignore
+        return _index_name(self._index)
 
     @cached_property
     def _source_field_set(self) -> Optional[AbstractSet[str]]:

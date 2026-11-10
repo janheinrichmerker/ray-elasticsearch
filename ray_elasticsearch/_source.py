@@ -25,6 +25,7 @@ from ray_elasticsearch._schema import (
     schema_from_elasticsearch,
 )
 from ray_elasticsearch._model import IndexType, QueryType, SchemaType
+from ray_elasticsearch._utils import _index_name
 
 
 def _parse_date(value: Any) -> datetime:
@@ -76,18 +77,7 @@ class ElasticsearchDatasource(Datasource):
 
     @cached_property
     def _index_name(self) -> Optional[str]:
-        if self._index is None:
-            return None
-        elif isinstance(self._index, str):
-            return self._index
-        else:
-            # Look up the index name on the class, as instantiating the document could fail validation (e.g., with required Pydantic fields).
-            index_name = self._index._default_index()
-            if index_name is None:
-                raise ValueError(
-                    f"Document class '{self._index.__name__}' has no index name."
-                )
-            return index_name
+        return _index_name(self._index)
 
     @cached_property
     def _source_field_set(self) -> Optional[AbstractSet[str]]:
