@@ -17,16 +17,16 @@ def _is_version_at_least(distribution_name: str, at_least_version: str) -> bool:
 
 
 if _is_installed("elasticsearch8"):
-    from elasticsearch8 import Elasticsearch as Elasticsearch  # type: ignore[no-redef]
-    from elasticsearch8.helpers import streaming_bulk as streaming_bulk  # type: ignore[no-redef]
+    from elasticsearch8 import Elasticsearch  # type: ignore[no-redef]
+    from elasticsearch8.helpers import streaming_bulk  # type: ignore[no-redef]
 elif _is_installed("elasticsearch7"):
-    from elasticsearch7 import Elasticsearch as Elasticsearch  # type: ignore[no-redef,assignment]
-    from elasticsearch7.helpers import streaming_bulk as streaming_bulk  # type: ignore[no-redef,assignment]
+    from elasticsearch7 import Elasticsearch  # type: ignore[no-redef,assignment]
+    from elasticsearch7.helpers import streaming_bulk  # type: ignore[no-redef,assignment]
 elif _is_installed("elasticsearch") or TYPE_CHECKING:
     if not _is_version_at_least("elasticsearch", "7.0.0"):
         raise ImportError("Elasticsearch version 7.0.0 or higher is required.")
-    from elasticsearch import Elasticsearch as Elasticsearch  # type: ignore[no-redef,assignment]
-    from elasticsearch.helpers import streaming_bulk as streaming_bulk  # type: ignore[no-redef,assignment]
+    from elasticsearch import Elasticsearch  # type: ignore[no-redef,assignment]
+    from elasticsearch.helpers import streaming_bulk  # type: ignore[no-redef,assignment]
 else:
     raise ImportError("Elasticsearch is not installed.")
 
@@ -34,41 +34,41 @@ if _is_installed("elasticsearch8-dsl"):
     if _is_version_at_least("elasticsearch8-dsl", "8.12.0"):
         raise ImportError("Elasticsearch DSL version below 8.12.0 is required.")
     from elasticsearch8_dsl import (  # type: ignore[no-redef]
-        Document as Document,
-        InnerDoc as InnerDoc,
-        Field as Field,
-        Object as Object,
-        Nested as Nested,
-        Text as Text,
-        Integer as Integer,
+        Document,
+        InnerDoc,
+        Field,
+        Object,
+        Nested,
+        Text,
+        Integer,
     )
-    from elasticsearch8_dsl.query import Query as Query  # type: ignore[no-redef]
+    from elasticsearch8_dsl.query import Query  # type: ignore[no-redef]
 elif _is_installed("elasticsearch7-dsl"):
     from elasticsearch7_dsl import (  # type: ignore[no-redef,assignment]
-        Document as Document,
-        InnerDoc as InnerDoc,
-        Field as Field,
-        Object as Object,
-        Nested as Nested,
-        Text as Text,
-        Integer as Integer,
+        Document,
+        InnerDoc,
+        Field,
+        Object,
+        Nested,
+        Text,
+        Integer,
     )
-    from elasticsearch7_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
+    from elasticsearch7_dsl.query import Query  # type: ignore[no-redef,assignment]
 elif _is_installed("elasticsearch-dsl") or TYPE_CHECKING:
     if not _is_version_at_least("elasticsearch-dsl", "7.0.0"):
         raise ImportError("Elasticsearch DSL version 7.0.0 or higher is required.")
     if _is_version_at_least("elasticsearch-dsl", "8.12.0"):
         raise ImportError("Elasticsearch DSL version below 8.12.0 is required.")
     from elasticsearch_dsl import (  # type: ignore[no-redef,assignment]
-        Document as Document,
-        InnerDoc as InnerDoc,
-        Field as Field,
-        Object as Object,
-        Nested as Nested,
-        Text as Text,
-        Integer as Integer,
+        Document,
+        InnerDoc,
+        Field,
+        Object,
+        Nested,
+        Text,
+        Integer,
     )
-    from elasticsearch_dsl.query import Query as Query  # type: ignore[no-redef,assignment]
+    from elasticsearch_dsl.query import Query  # type: ignore[no-redef,assignment]
 else:
     Document = NotImplemented  # type: ignore
     InnerDoc = NotImplemented  # type: ignore
@@ -78,3 +78,17 @@ else:
     Text = NotImplemented  # type: ignore
     Integer = NotImplemented  # type: ignore
     Query = NotImplemented  # type: ignore
+
+
+__all__ = [
+    "Elasticsearch",
+    "streaming_bulk",
+    "Document",
+    "InnerDoc",
+    "Field",
+    "Object",
+    "Nested",
+    "Text",
+    "Integer",
+    "Query",
+]
