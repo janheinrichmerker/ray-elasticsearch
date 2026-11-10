@@ -3,15 +3,12 @@ from typing import (
     AbstractSet,
     Any,
     Iterable,
-    Iterator,
     Mapping,
     Optional,
     Union,
     Dict,
 )
 
-from pandas import DataFrame
-from pyarrow import Table
 from ray.data import Datasink
 from ray.data._internal.execution.interfaces import TaskContext
 from ray.data.block import Block
@@ -21,6 +18,7 @@ from ray_elasticsearch._compat import (
     streaming_bulk,
 )
 from ray_elasticsearch._model import IndexType, OpType
+from ray_elasticsearch._utils import _batch_to_table
 
 
 class ElasticsearchDatasink(Datasink):
@@ -59,16 +57,6 @@ class ElasticsearchDatasink(Datasink):
         self._initial_backoff = initial_backoff
         self._max_backoff = max_backoff
         self._client_kwargs = client_kwargs
-
-    @staticmethod
-    def _iter_block_rows(block: Block) -> Iterator[Mapping[str, Any]]:
-        if isinstance(block, Table):
-            yield from block.to_pylist()
-        elif isinstance(block, DataFrame):
-            for _, row in block.iterrows():
-                yield row.to_dict()
-        else:
-            raise RuntimeError(f"Unknown block type: {type(block)}")
 
     @cached_property
     def _elasticsearch(self) -> Elasticsearch:
@@ -137,7 +125,7 @@ class ElasticsearchDatasink(Datasink):
             actions=(
                 self._transform_row(row)
                 for block in blocks
-                for row in self._iter_block_rows(block)
+                for row in _batch_to_table(block).to_pylist()
             ),
             chunk_size=self._chunk_size,
             max_chunk_bytes=self._max_chunk_bytes,
