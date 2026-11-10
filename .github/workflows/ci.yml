@@ -105,7 +105,19 @@ jobs:
           - "8-dsl-major"
           - "8-pydantic"
           - "8-pydantic-major"
+        ray:
+          - "minimum"
+          - "latest"
+        include:
+          # Ray 2.49 does not support pandas 3 yet.
+          - ray: "minimum"
+            ray-requirements: '"ray[data]~=2.49.0" "pandas<3"'
+          - ray: "latest"
+            ray-requirements: ""
         exclude:
+          # Ray 2.49 has no wheels for Python 3.14.
+          - python: "3.14"
+            ray: "minimum"
           - python: "3.10"
             elasticsearch: "7-pydantic"
           - python: "3.10"
@@ -125,7 +137,7 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: "🧰 Install dependencies"
-        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}]
+        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}] ${{ matrix.ray-requirements }}
       - name: "🔍 Check Python static typing"
         run: mypy .
   python-test:
@@ -151,7 +163,19 @@ jobs:
           - "8-dsl-major"
           - "8-pydantic"
           - "8-pydantic-major"
+        ray:
+          - "minimum"
+          - "latest"
+        include:
+          # Ray 2.49 does not support pandas 3 yet.
+          - ray: "minimum"
+            ray-requirements: '"ray[data]~=2.49.0" "pandas<3"'
+          - ray: "latest"
+            ray-requirements: ""
         exclude:
+          # Ray 2.49 has no wheels for Python 3.14.
+          - python: "3.14"
+            ray: "minimum"
           - python: "3.10"
             elasticsearch: "7-pydantic"
           - python: "3.10"
@@ -171,12 +195,12 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: "🧰 Install dependencies"
-        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}]
+        run: pip install .[tests,tests-es${{ matrix.elasticsearch }}] ${{ matrix.ray-requirements }}
       - name: "🧪 Test Python code"
         run: pytest --cov --cov-report=xml .
       - name: "📤 Upload coverage to Codecov"
         uses: codecov/codecov-action@v5
-        if: matrix.python == '3.14'
+        if: matrix.python == '3.14' && matrix.ray == 'latest'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   python-publish:
