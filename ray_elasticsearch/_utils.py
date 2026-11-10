@@ -1,10 +1,26 @@
-from typing import TypeVar, Callable, Any, Mapping, Sequence
+from typing import TypeVar, Callable, Any, Mapping, Optional, Sequence
 
 from pandas import DataFrame
 from pyarrow import Table, array
 from ray.data.block import DataBatch
 
 from ray_elasticsearch._compat import Document
+from ray_elasticsearch._model import IndexType
+
+
+def _index_name(index: Optional[IndexType]) -> Optional[str]:
+    """
+    Get the index name from an index name or document class.
+    """
+    if index is None:
+        return None
+    elif isinstance(index, str):
+        return index
+    # Look up the index name on the class, as instantiating the document could fail validation (e.g., with required Pydantic fields).
+    index_name = index._default_index()
+    if index_name is None:
+        raise ValueError(f"Document class '{index.__name__}' has no index name.")
+    return index_name
 
 
 def _batch_to_table(batch: DataBatch) -> Table:
@@ -104,5 +120,5 @@ if Document is not NotImplemented:
 
         return _decorate
 else:
-    unwrap_document = NotImplemented  # type: ignore[assignment]
-    unwrap_documents = NotImplemented  # type: ignore[assignment]
+    unwrap_document = NotImplemented
+    unwrap_documents = NotImplemented
