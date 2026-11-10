@@ -192,7 +192,7 @@ class ElasticsearchDatasource(Datasource):
                 exec_stats=None,
             )
         else:
-            metadata = BlockMetadata(  # type: ignore[call-arg]
+            metadata = BlockMetadata(
                 num_rows=None,
                 size_bytes=None,
                 schema=schema,

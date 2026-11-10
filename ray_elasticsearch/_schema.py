@@ -24,7 +24,7 @@ from pyarrow import (
     fixed_shape_tensor,
     unify_schemas,
 )
-from typing_extensions import TypeAlias, TypedDict, NotRequired  # type: ignore[import]
+from typing_extensions import TypeAlias, TypedDict, NotRequired
 
 from ray_elasticsearch._compat import (
     Elasticsearch,
