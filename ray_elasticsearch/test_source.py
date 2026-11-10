@@ -95,35 +95,69 @@ def test_read_unparseable_date_fails(
         raise AssertionError("Expected reading an unparseable date to fail.")
 
 
-def _validating_document(index_name: Optional[str]) -> type[Document]:
-    """
-    Create a document class that fails validation when created without any arguments (like, e.g., Pydantic documents with required fields).
-    """
+def test_index_name() -> None:
     if Document is NotImplemented:
         skip("Elasticsearch DSL is not installed.")
 
     class _Document(Document):
         title = Text(required=True)
 
+        class Index:
+            name = "documents"
+
+    datasource = ElasticsearchDatasource(index=_Document)
+
+    assert datasource.get_name() == "Elasticsearch(documents)"
+
+
+def test_no_index_name() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+    datasource = ElasticsearchDatasource(index=_Document)
+
+    with raises(ValueError, match="has no index name"):
+        datasource.get_name()
+
+
+def test_index_name_with_validation() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+        # Fail validation when created without any arguments (like, e.g., Pydantic documents with required fields).
         def __init__(self, **kwargs: Any) -> None:
             if not kwargs:
                 raise ValueError("Document validation failed: missing field 'title'.")
             super().__init__(**kwargs)
 
         class Index:
-            name = index_name
+            name = "documents"
 
-    return _Document
-
-
-def test_validating_document_index_name() -> None:
-    datasource = ElasticsearchDatasource(index=_validating_document("documents"))
+    datasource = ElasticsearchDatasource(index=_Document)
 
     assert datasource.get_name() == "Elasticsearch(documents)"
 
 
-def test_validating_document_without_index_name() -> None:
-    datasource = ElasticsearchDatasource(index=_validating_document(None))
+def test_no_index_name_with_validation() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+        # Fail validation when created without any arguments (like, e.g., Pydantic documents with required fields).
+        def __init__(self, **kwargs: Any) -> None:
+            if not kwargs:
+                raise ValueError("Document validation failed: missing field 'title'.")
+            super().__init__(**kwargs)
+
+    datasource = ElasticsearchDatasource(index=_Document)
 
     with raises(ValueError, match="has no index name"):
         datasource.get_name()

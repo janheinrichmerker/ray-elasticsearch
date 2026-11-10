@@ -1,11 +1,12 @@
 from typing import Any, Iterable, Iterator, Mapping
 
 from pyarrow import Table
-from pytest import MonkeyPatch, mark
+from pytest import MonkeyPatch, mark, raises, skip
 from ray.data._internal.execution.interfaces import TaskContext
 from ray.data.block import Block
 
 from ray_elasticsearch import ElasticsearchDatasink
+from ray_elasticsearch._compat import Document, Text
 from ray_elasticsearch.conftest import FakeElasticsearch
 
 
@@ -47,3 +48,71 @@ def test_write(monkeypatch: MonkeyPatch, block_type: str) -> None:
             "_source": {"title": "Second", "tags": [], "views": None},
         },
     ]
+
+
+def test_index_name() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+        class Index:
+            name = "documents"
+
+    datasink = ElasticsearchDatasink(index=_Document)
+
+    assert datasink.get_name() == "Elasticsearch(documents)"
+
+
+def test_no_index_name() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+    datasink = ElasticsearchDatasink(index=_Document)
+
+    with raises(ValueError, match="has no index name"):
+        datasink.get_name()
+
+
+def test_index_name_with_validation() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+        # Fail validation when created without any arguments (like, e.g., Pydantic documents with required fields).
+        def __init__(self, **kwargs: Any) -> None:
+            if not kwargs:
+                raise ValueError("Document validation failed: missing field 'title'.")
+            super().__init__(**kwargs)
+
+        class Index:
+            name = "documents"
+
+    datasink = ElasticsearchDatasink(index=_Document)
+
+    assert datasink.get_name() == "Elasticsearch(documents)"
+
+
+def test_no_index_name_with_validation() -> None:
+    if Document is NotImplemented:
+        skip("Elasticsearch DSL is not installed.")
+
+    class _Document(Document):
+        title = Text(required=True)
+
+        # Fail validation when created without any arguments (like, e.g., Pydantic documents with required fields).
+        def __init__(self, **kwargs: Any) -> None:
+            if not kwargs:
+                raise ValueError("Document validation failed: missing field 'title'.")
+            super().__init__(**kwargs)
+
+    datasink = ElasticsearchDatasink(index=_Document)
+
+    with raises(ValueError, match="has no index name"):
+        datasink.get_name()
