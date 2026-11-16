@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping
+from typing import Any
 
 from pyarrow import Table
 from pytest import MonkeyPatch, mark, raises, skip

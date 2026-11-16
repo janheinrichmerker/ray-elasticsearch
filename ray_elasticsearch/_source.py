@@ -1,18 +1,11 @@
+from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Set as AbstractSet
 from datetime import datetime, timezone
 from functools import cached_property
 from itertools import chain, repeat
-from typing import (
-    AbstractSet,
-    Any,
-    Iterable,
-    Iterator,
-    Mapping,
-    Optional,
-    Sequence,
-    TYPE_CHECKING,
-)
-from packaging.version import Version
+from typing import TYPE_CHECKING, Any
 
+from packaging.version import Version
 from pyarrow import DataType, Schema, Table
 from pyarrow.types import is_list, is_struct, is_timestamp
 from ray import __version__ as ray_version

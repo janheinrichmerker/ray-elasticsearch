@@ -1,5 +1,6 @@
+from collections.abc import Iterable, Iterator
 from re import escape
-from typing import Any, Iterable, cast, Iterator, Union, Optional
+from typing import Any, cast
 
 from pyarrow import (
     DataType,

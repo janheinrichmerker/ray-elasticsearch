@@ -1,4 +1,5 @@
-from typing import Any, Literal, Mapping, TypeAlias, Union, TYPE_CHECKING
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
 from pyarrow import Schema
 

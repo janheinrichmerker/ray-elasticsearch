@@ -1,4 +1,5 @@
-from typing import Any, Mapping, Optional, Sequence, cast
+from collections.abc import Mapping, Sequence
+from typing import Any, cast
 
 from pyarrow import Table, concat_tables
 from pytest import MonkeyPatch, fixture

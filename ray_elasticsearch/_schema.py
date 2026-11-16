@@ -1,4 +1,5 @@
-from typing import cast, Optional, Iterable, Union
+from collections.abc import Iterable
+from typing import TypeAlias, cast
 from warnings import warn
 
 from pyarrow import (
@@ -24,7 +25,7 @@ from pyarrow import (
     uint64,
     unify_schemas,
 )
-from typing_extensions import TypeAlias, TypedDict, NotRequired
+from typing_extensions import NotRequired, TypedDict
 
 from ray_elasticsearch._compat import (
     Document,

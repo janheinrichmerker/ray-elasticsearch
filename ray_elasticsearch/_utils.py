@@ -1,4 +1,5 @@
-from typing import TypeVar, Callable, Any, Mapping, Optional, Sequence
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any, TypeVar
 
 from pandas import DataFrame
 from pyarrow import Table, array

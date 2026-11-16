@@ -1,13 +1,7 @@
+from collections.abc import Iterable, Mapping
+from collections.abc import Set as AbstractSet
 from functools import cached_property
-from typing import (
-    AbstractSet,
-    Any,
-    Iterable,
-    Mapping,
-    Optional,
-    Union,
-    Dict,
-)
+from typing import Any
 
 from ray.data import Datasink
 from ray.data._internal.execution.interfaces import TaskContext
