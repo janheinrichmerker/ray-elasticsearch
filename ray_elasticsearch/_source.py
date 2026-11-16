@@ -184,6 +184,7 @@ class ElasticsearchDatasource(Datasource):
         slice_id: int,
         slice_max: int,
         num_rows: Optional[int],
+        row_limit: Optional[int],
         chunk_size: int,
         source_field_set: Optional[AbstractSet[str]],
         meta_field_set: Optional[AbstractSet[str]],
@@ -253,12 +254,16 @@ class ElasticsearchDatasource(Datasource):
         def iter_blocks() -> Iterator[Table]:
             elasticsearch = Elasticsearch(**client_kwargs)
             search_after: Any = None
-            while True:
+            remaining = row_limit
+            while remaining is None or remaining > 0:
                 response = elasticsearch.search(
                     pit={"id": pit_id, "keep_alive": keep_alive},
                     query=query,
                     slice={"id": slice_id, "max": slice_max},
-                    size=chunk_size,
+                    # Do not fetch more documents than the row limit allows.
+                    size=chunk_size
+                    if remaining is None
+                    else min(chunk_size, remaining),
                     search_after=search_after,
                     sort=["_shard_doc"],
                     seq_no_primary_term=True,
@@ -268,6 +273,8 @@ class ElasticsearchDatasource(Datasource):
                 if len(hits) == 0:
                     break
                 search_after = max(hit["sort"] for hit in hits)
+                if remaining is not None:
+                    remaining -= len(hits)
                 rows: list[dict[str, Any]] = [transform_row(row) for row in hits]
                 try:
                     yield Table.from_pylist(
@@ -315,6 +322,12 @@ class ElasticsearchDatasource(Datasource):
             response["hits"]["total"]["value"] if "error" not in response else None
             for response in self._elasticsearch.msearch(body=slice_count_searches)["responses"]
         ]
+        if per_task_row_limit is not None:
+            # A read task never yields more rows than the row limit.
+            slice_counts = [
+                min(count, per_task_row_limit) if count is not None else None
+                for count in slice_counts
+            ]
         return [
             self._get_read_task(
                 pit_id=pit_id,
@@ -323,6 +336,7 @@ class ElasticsearchDatasource(Datasource):
                 slice_id=i,
                 slice_max=parallelism,
                 num_rows=slice_counts[i],
+                row_limit=per_task_row_limit,
                 chunk_size=self._chunk_size,
                 source_field_set=self._source_field_set,
                 meta_field_set=self._meta_field_set,
