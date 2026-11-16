@@ -120,7 +120,7 @@ def schema_from_document(document: type[Document] | type[InnerDoc]) -> Schema:
     - Date fields are only supported with the default format or a single ISO 8601 or `epoch_millis` format.
     """
     # The document options are set by the Elasticsearch DSL metaclass, but not declared.
-    document_options = cast(DocumentOptions, getattr(document, "_doc_type"))
+    document_options = cast(DocumentOptions, document._doc_type)  # ty: ignore[missing-attribute]
     mapping = document_options.mapping
     properties = mapping.properties.properties
     return schema(
@@ -230,7 +230,7 @@ def _property_to_field_data_type(prop: _PropertyDict) -> DataType:
         return float64()
     elif type == "rank_feature":
         return float64()
-    elif type == "text":
+    elif type == "text":  # noqa: SIM114
         return string()
     elif type == "keyword":
         return string()
@@ -241,9 +241,9 @@ def _property_to_field_data_type(prop: _PropertyDict) -> DataType:
             stacklevel=2,
         )
         return string()
-    elif type == "ip":
+    elif type == "ip":  # noqa: SIM114
         return string()
-    elif type == "search_as_you_type":
+    elif type == "search_as_you_type":  # noqa: SIM114
         return string()
     elif type == "version":
         return string()

@@ -93,7 +93,7 @@ class ElasticsearchDatasink(Datasink):
                 if key in self._source_field_set
             }
 
-        if self._op_type is None:
+        if self._op_type is None:  # noqa: SIM114
             return {"_source": source, **meta}
         elif self._op_type in ("index", "create"):
             return {"_source": source, **meta}
