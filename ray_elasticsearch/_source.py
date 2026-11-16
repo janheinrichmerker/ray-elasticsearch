@@ -288,10 +288,7 @@ class ElasticsearchDatasource(Datasource):
         per_task_row_limit: Optional[int] = None,
         data_context: Optional[DataContext] = None,
     ) -> list[ReadTask]:
-        pit_id: str = self._elasticsearch.open_point_in_time(
-            index=self._index_name if self._index_name is not None else "_all",
-            keep_alive=self._keep_alive,
-        )["id"]
+        pit_id = self._pit_id
         try:
             return [
                 self._get_read_task(
