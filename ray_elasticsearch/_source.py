@@ -19,13 +19,13 @@ from ray import __version__ as ray_version
 from ray.data import DataContext, Datasource, ReadTask
 from ray.data.block import BlockMetadata
 
-from ray_elasticsearch._compat import Elasticsearch, Query, Document
+from ray_elasticsearch._compat import Document, Elasticsearch, Query
+from ray_elasticsearch._model import IndexType, QueryType, SchemaType
 from ray_elasticsearch._schema import (
     complete_schema,
     schema_from_document,
     schema_from_elasticsearch,
 )
-from ray_elasticsearch._model import IndexType, QueryType, SchemaType
 from ray_elasticsearch._utils import _index_name
 
 

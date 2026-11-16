@@ -4,7 +4,6 @@ from pyarrow import Schema
 
 from ray_elasticsearch._compat import Document, Query
 
-
 # Determine index and query typing based on Elasticsearch DSL availability.
 if (Document is not NotImplemented and Query is not NotImplemented) or TYPE_CHECKING:
     from ray_elasticsearch._compat import Document, Query

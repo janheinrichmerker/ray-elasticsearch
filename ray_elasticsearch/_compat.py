@@ -1,6 +1,7 @@
-from importlib.metadata import metadata, PackageNotFoundError, version
-from packaging.version import Version
+from importlib.metadata import PackageNotFoundError, metadata, version
 from typing import TYPE_CHECKING
+
+from packaging.version import Version
 
 
 def _is_installed(distribution_name: str) -> bool:
@@ -37,12 +38,12 @@ else:
 if TYPE_CHECKING:
     from elasticsearch_dsl import (
         Document,
-        InnerDoc,
         Field,
-        Object,
-        Nested,
-        Text,
+        InnerDoc,
         Integer,
+        Nested,
+        Object,
+        Text,
     )
     from elasticsearch_dsl.document import DocumentOptions
     from elasticsearch_dsl.query import Query
@@ -51,24 +52,24 @@ elif _is_installed("elasticsearch8-dsl"):
         raise ImportError("Elasticsearch DSL version below 8.12.0 is required.")
     from elasticsearch8_dsl import (
         Document,
-        InnerDoc,
         Field,
-        Object,
-        Nested,
-        Text,
+        InnerDoc,
         Integer,
+        Nested,
+        Object,
+        Text,
     )
     from elasticsearch8_dsl.document import DocumentOptions
     from elasticsearch8_dsl.query import Query
 elif _is_installed("elasticsearch7-dsl"):
     from elasticsearch7_dsl import (
         Document,
-        InnerDoc,
         Field,
-        Object,
-        Nested,
-        Text,
+        InnerDoc,
         Integer,
+        Nested,
+        Object,
+        Text,
     )
     from elasticsearch7_dsl.document import DocumentOptions
     from elasticsearch7_dsl.query import Query
@@ -79,12 +80,12 @@ elif _is_installed("elasticsearch-dsl"):
         raise ImportError("Elasticsearch DSL version below 8.12.0 is required.")
     from elasticsearch_dsl import (
         Document,
-        InnerDoc,
         Field,
-        Object,
-        Nested,
-        Text,
+        InnerDoc,
         Integer,
+        Nested,
+        Object,
+        Text,
     )
     from elasticsearch_dsl.document import DocumentOptions
     from elasticsearch_dsl.query import Query
@@ -100,15 +101,15 @@ else:
     Query = NotImplemented
 
 __all__ = [
-    "Elasticsearch",
-    "streaming_bulk",
     "Document",
-    "InnerDoc",
-    "Field",
-    "Object",
-    "Nested",
-    "Text",
-    "Integer",
-    "Query",
     "DocumentOptions",
+    "Elasticsearch",
+    "Field",
+    "InnerDoc",
+    "Integer",
+    "Nested",
+    "Object",
+    "Query",
+    "Text",
+    "streaming_bulk",
 ]

@@ -1,6 +1,8 @@
 from os import environ
+
 from ray import init
 from ray.data import range
+
 from ray_elasticsearch import ElasticsearchDatasink
 
 init()

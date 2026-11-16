@@ -2,24 +2,24 @@ from re import escape
 from typing import Any, Iterable, cast, Iterator, Union, Optional
 
 from pyarrow import (
-    schema,
-    field,
-    string,
-    int64,
-    float64,
-    timestamp,
-    struct,
-    list_,
-    Schema,
-    Field,
     DataType,
-    StructType,
+    Field,
     ListType,
+    Schema,
+    StructType,
+    field,
+    float64,
+    int64,
+    list_,
+    schema,
+    string,
+    struct,
+    timestamp,
 )
 from pytest import mark, raises, skip
 
 from ray_elasticsearch import ElasticsearchDatasource
-from ray_elasticsearch._compat import Document, InnerDoc, Text, Object, Nested
+from ray_elasticsearch._compat import Document, InnerDoc, Nested, Object, Text
 from ray_elasticsearch.conftest import FakeElasticsearch
 
 

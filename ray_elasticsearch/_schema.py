@@ -2,15 +2,12 @@ from typing import cast, Optional, Iterable, Union
 from warnings import warn
 
 from pyarrow import (
-    Schema,
-    Field,
     DataType,
-    schema,
+    Field,
+    Schema,
+    bool_,
     field,
-    string,
-    struct,
-    list_,
-    map_,
+    fixed_shape_tensor,
     float16,
     float32,
     float64,
@@ -18,22 +15,27 @@ from pyarrow import (
     int16,
     int32,
     int64,
-    bool_,
-    uint64,
+    list_,
+    map_,
+    schema,
+    string,
+    struct,
     timestamp,
-    fixed_shape_tensor,
+    uint64,
     unify_schemas,
 )
 from typing_extensions import TypeAlias, TypedDict, NotRequired
 
 from ray_elasticsearch._compat import (
-    Elasticsearch,
     Document,
-    InnerDoc,
     DocumentOptions,
-    Field as EsField,
-    Object,
+    Elasticsearch,
+    InnerDoc,
     Nested,
+    Object,
+)
+from ray_elasticsearch._compat import (
+    Field as EsField,
 )
 
 _META_FIELDS: Iterable[Field] = [
