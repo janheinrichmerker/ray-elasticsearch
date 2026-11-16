@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from functools import cached_property
+from itertools import chain, repeat
 from typing import (
     AbstractSet,
     Any,
@@ -182,6 +183,7 @@ class ElasticsearchDatasource(Datasource):
         query: Optional[Mapping[str, Any]],
         slice_id: int,
         slice_max: int,
+        num_rows: Optional[int],
         chunk_size: int,
         source_field_set: Optional[AbstractSet[str]],
         meta_field_set: Optional[AbstractSet[str]],
@@ -190,14 +192,14 @@ class ElasticsearchDatasource(Datasource):
     ) -> ReadTask:
         if Version(ray_version) >= Version("2.47.0") or TYPE_CHECKING:
             metadata = BlockMetadata(
-                num_rows=None,
+                num_rows=num_rows,
                 size_bytes=None,
                 input_files=None,
                 exec_stats=None,
             )
         else:
             metadata = BlockMetadata(
-                num_rows=None,
+                num_rows=num_rows,
                 size_bytes=None,
                 schema=schema,
                 input_files=None,
@@ -295,6 +297,24 @@ class ElasticsearchDatasource(Datasource):
                 f"Parallelism must be at least 2 to slice the point in time, got {parallelism}."
             )
         pit_id = self._pit_id
+
+        slice_count_search_bodies: list[Mapping[str, Any]] = [
+            {
+                "pit": {"id": pit_id, "keep_alive": self._keep_alive},
+                "size": 0,
+                "track_total_hits": True,
+                # Elasticsearch rejects a null query, so omit it instead.
+                **({"query": self._query_dict} if self._query_dict is not None else {}),
+                "slice": {"id": i, "max": parallelism},
+            }
+            for i in range(parallelism)
+        ]
+        # Requests within a point in time must not name an index, so all headers are empty.
+        slice_count_searches = list(chain.from_iterable(zip(repeat({}), slice_count_search_bodies)))
+        slice_counts: list[Optional[int]] = [
+            response["hits"]["total"]["value"] if "error" not in response else None
+            for response in self._elasticsearch.msearch(body=slice_count_searches)["responses"]
+        ]
         return [
             self._get_read_task(
                 pit_id=pit_id,
@@ -302,6 +322,7 @@ class ElasticsearchDatasource(Datasource):
                 query=self._query_dict,
                 slice_id=i,
                 slice_max=parallelism,
+                num_rows=slice_counts[i],
                 chunk_size=self._chunk_size,
                 source_field_set=self._source_field_set,
                 meta_field_set=self._meta_field_set,
