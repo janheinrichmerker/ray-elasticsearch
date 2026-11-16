@@ -36,6 +36,9 @@ class FakeElasticsearch:
         size: int = 10,
         **kwargs: Any,
     ) -> Any:
+        if slice is not None and slice["max"] < 2:
+            # Like Elasticsearch, reject slicing into a single slice.
+            raise ValueError("max must be greater than 1")
         # Distribute the hits round-robin across slices.
         hits = [
             {**hit, "sort": [i]}
@@ -55,11 +58,11 @@ def fake_elasticsearch(monkeypatch: MonkeyPatch) -> type[FakeElasticsearch]:
     return fake
 
 
-def read_table(datasource: ElasticsearchDatasource) -> Table:
+def read_table(datasource: ElasticsearchDatasource, parallelism: int = 2) -> Table:
     return concat_tables(
         [
             cast(Table, block)
-            for task in datasource.get_read_tasks(parallelism=2)
+            for task in datasource.get_read_tasks(parallelism=parallelism)
             for block in task()
         ]
     )
