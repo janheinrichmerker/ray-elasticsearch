@@ -26,6 +26,9 @@ class FakeElasticsearch:
     def close_point_in_time(self, body: Mapping[str, Any]) -> None:
         pass
 
+    def msearch(self, body: Sequence[Mapping[str, Any]]) -> Any:
+        return {"responses": [self.search(**search) for search in body[1::2]]}
+
     def search(self, search_after: Optional[Any] = None, **kwargs: Any) -> Any:
         if search_after is not None:
             return {"hits": {"hits": []}}
