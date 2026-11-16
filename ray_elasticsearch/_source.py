@@ -289,6 +289,11 @@ class ElasticsearchDatasource(Datasource):
         per_task_row_limit: Optional[int] = None,
         data_context: Optional[DataContext] = None,
     ) -> list[ReadTask]:
+        # Elasticsearch rejects slicing into a single slice.
+        if parallelism < 2:
+            raise ValueError(
+                f"Parallelism must be at least 2 to slice the point in time, got {parallelism}."
+            )
         pit_id = self._pit_id
         return [
             self._get_read_task(
