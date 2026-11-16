@@ -317,10 +317,14 @@ class ElasticsearchDatasource(Datasource):
             for i in range(parallelism)
         ]
         # Requests within a point in time must not name an index, so all headers are empty.
-        slice_count_searches = list(chain.from_iterable(zip(repeat({}), slice_count_search_bodies)))
+        slice_count_searches = list(
+            chain.from_iterable(zip(repeat({}), slice_count_search_bodies))
+        )
         slice_counts: list[Optional[int]] = [
             response["hits"]["total"]["value"] if "error" not in response else None
-            for response in self._elasticsearch.msearch(body=slice_count_searches)["responses"]
+            for response in self._elasticsearch.msearch(body=slice_count_searches)[
+                "responses"
+            ]
         ]
         if per_task_row_limit is not None:
             # A read task never yields more rows than the row limit.
