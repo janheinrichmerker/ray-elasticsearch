@@ -33,6 +33,7 @@ class FakeElasticsearch:
         self,
         search_after: Optional[Any] = None,
         slice: Optional[Mapping[str, int]] = None,
+        size: int = 10,
         **kwargs: Any,
     ) -> Any:
         # Distribute the hits round-robin across slices.
@@ -43,8 +44,8 @@ class FakeElasticsearch:
         ]
         total = {"value": len(hits), "relation": "eq"}
         if search_after is not None:
-            return {"hits": {"total": total, "hits": []}}
-        return {"hits": {"total": total, "hits": hits}}
+            hits = [hit for hit in hits if hit["sort"] > search_after]
+        return {"hits": {"total": total, "hits": hits[:size]}}
 
 
 @fixture
