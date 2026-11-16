@@ -249,7 +249,7 @@ class ElasticsearchDatasource(Datasource):
             search_after: Any = None
             while True:
                 response = elasticsearch.search(
-                    pit={"id": pit_id},
+                    pit={"id": pit_id, "keep_alive": keep_alive},
                     query=query,
                     slice={"id": slice_id, "max": slice_max},
                     size=chunk_size,
