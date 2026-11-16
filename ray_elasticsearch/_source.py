@@ -144,6 +144,13 @@ class ElasticsearchDatasource(Datasource):
         return self._safe_schema
 
     @cached_property
+    def _pit_id(self) -> str:
+        return self._elasticsearch.open_point_in_time(
+            index=self._index_name if self._index_name is not None else "_all",
+            keep_alive=self._keep_alive,
+        )["id"]
+
+    @cached_property
     def _num_rows(self) -> int:
         return self._elasticsearch.count(
             index=self._index_name,
