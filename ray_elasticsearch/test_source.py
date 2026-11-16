@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from pytest import mark, raises, skip
+from pytest import MonkeyPatch, mark, raises, skip
 
 from ray_elasticsearch import ElasticsearchDatasource
 from ray_elasticsearch._compat import Document, Text
@@ -161,3 +161,59 @@ def test_no_index_name_with_validation() -> None:
 
     with raises(ValueError, match="has no index name"):
         datasource.get_name()
+
+
+def test_num_rows(fake_elasticsearch: type[FakeElasticsearch]) -> None:
+    fake_elasticsearch.hits = [{"_id": "1", "_source": {}}, {"_id": "2", "_source": {}}]
+    datasource = ElasticsearchDatasource(index="index")
+
+    assert datasource.num_rows() == 2
+
+
+def test_read_tasks_num_rows(fake_elasticsearch: type[FakeElasticsearch]) -> None:
+    fake_elasticsearch.hits = [{"_id": "1", "_source": {}}, {"_id": "2", "_source": {}}]
+    datasource = ElasticsearchDatasource(index="index")
+
+    tasks = datasource.get_read_tasks(parallelism=3)
+
+    assert [task.metadata.num_rows for task in tasks] == [1, 1, 0]
+
+
+def test_num_rows_and_read_tasks_share_point_in_time(
+    monkeypatch: MonkeyPatch,
+    fake_elasticsearch: type[FakeElasticsearch],
+) -> None:
+    opened: list[str] = []
+
+    def open_point_in_time(self: Any, index: str, keep_alive: str) -> Any:
+        opened.append(index)
+        return {"id": "pit"}
+
+    monkeypatch.setattr(fake_elasticsearch, "open_point_in_time", open_point_in_time)
+    datasource = ElasticsearchDatasource(index="index")
+
+    datasource.num_rows()
+    datasource.get_read_tasks(parallelism=2)
+
+    assert opened == ["index"]
+
+
+def test_read_tasks_parallelism_below_two_fails(
+    fake_elasticsearch: type[FakeElasticsearch],
+) -> None:
+    datasource = ElasticsearchDatasource(index="index")
+
+    with raises(ValueError):
+        datasource.get_read_tasks(parallelism=1)
+
+
+def test_read_tasks_per_task_row_limit(
+    fake_elasticsearch: type[FakeElasticsearch],
+) -> None:
+    fake_elasticsearch.hits = [{"_id": str(i), "_source": {}} for i in range(5)]
+    datasource = ElasticsearchDatasource(index="index", chunk_size=2)
+
+    tasks = datasource.get_read_tasks(parallelism=2, per_task_row_limit=1)
+
+    assert [task.metadata.num_rows for task in tasks] == [1, 1]
+    assert [sum(len(block) for block in task()) for task in tasks] == [1, 1]
