@@ -289,24 +289,20 @@ class ElasticsearchDatasource(Datasource):
         data_context: Optional[DataContext] = None,
     ) -> list[ReadTask]:
         pit_id = self._pit_id
-        try:
-            return [
-                self._get_read_task(
-                    pit_id=pit_id,
-                    query=self._query_dict,
-                    slice_id=i,
-                    slice_max=parallelism,
-                    chunk_size=self._chunk_size,
-                    source_field_set=self._source_field_set,
-                    meta_field_set=self._meta_field_set,
-                    client_kwargs=self._client_kwargs,
-                    schema=self._safe_schema,
-                )
-                for i in range(parallelism)
-            ]
-        except Exception as e:
-            self._elasticsearch.close_point_in_time(body={"id": pit_id})
-            raise e
+        return [
+            self._get_read_task(
+                pit_id=pit_id,
+                query=self._query_dict,
+                slice_id=i,
+                slice_max=parallelism,
+                chunk_size=self._chunk_size,
+                source_field_set=self._source_field_set,
+                meta_field_set=self._meta_field_set,
+                client_kwargs=self._client_kwargs,
+                schema=self._safe_schema,
+            )
+            for i in range(parallelism)
+        ]
 
     def get_name(self) -> str:
         if self._index_name is not None:
