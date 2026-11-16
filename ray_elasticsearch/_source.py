@@ -281,11 +281,11 @@ class ElasticsearchDatasource(Datasource):
                         mapping=rows,
                         schema=schema,
                     )
-                except Exception as e:
+                except Exception:
                     print(
                         f"Failed to create Table with schema {schema}, from rows: {rows}."
                     )
-                    raise e
+                    raise
 
         return ReadTask(
             read_fn=iter_blocks,
