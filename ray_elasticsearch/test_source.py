@@ -198,22 +198,36 @@ def test_num_rows_and_read_tasks_share_point_in_time(
     assert opened == ["index"]
 
 
-def test_read_tasks_parallelism_below_two_fails(
+def test_read_tasks_parallelism_below_one_fails(
     fake_elasticsearch: type[FakeElasticsearch],
 ) -> None:
     datasource = ElasticsearchDatasource(index="index")
 
     with raises(ValueError):
-        datasource.get_read_tasks(parallelism=1)
+        datasource.get_read_tasks(parallelism=0)
 
 
-def test_read_tasks_per_task_row_limit(
+def test_read_tasks_parallelism_one(
     fake_elasticsearch: type[FakeElasticsearch],
 ) -> None:
     fake_elasticsearch.hits = [{"_id": str(i), "_source": {}} for i in range(5)]
     datasource = ElasticsearchDatasource(index="index", chunk_size=2)
 
-    tasks = datasource.get_read_tasks(parallelism=2, per_task_row_limit=1)
+    table = read_table(datasource, parallelism=1)
 
-    assert [task.metadata.num_rows for task in tasks] == [1, 1]
-    assert [sum(len(block) for block in task()) for task in tasks] == [1, 1]
+    assert table["_id"].to_pylist() == ["0", "1", "2", "3", "4"]
+
+
+@mark.parametrize(("parallelism", "expected"), [(1, [1]), (2, [1, 1])])
+def test_read_tasks_per_task_row_limit(
+    fake_elasticsearch: type[FakeElasticsearch],
+    parallelism: int,
+    expected: list[int],
+) -> None:
+    fake_elasticsearch.hits = [{"_id": str(i), "_source": {}} for i in range(5)]
+    datasource = ElasticsearchDatasource(index="index", chunk_size=2)
+
+    tasks = datasource.get_read_tasks(parallelism=parallelism, per_task_row_limit=1)
+
+    assert [task.metadata.num_rows for task in tasks] == expected
+    assert [sum(len(block) for block in task()) for task in tasks] == expected
