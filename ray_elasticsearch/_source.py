@@ -233,9 +233,11 @@ class ElasticsearchDatasource(Datasource):
                 }
 
             source: Mapping[str, Any] = {
-                key: transform_value(value, schema.field(key).type)
-                if schema is not None and key in schema.names
-                else value
+                key: (
+                    transform_value(value, schema.field(key).type)
+                    if schema is not None and key in schema.names
+                    else value
+                )
                 for key, value in row.get("_source", {}).items()
                 if source_field_set is None or key in source_field_set
             }
@@ -261,9 +263,9 @@ class ElasticsearchDatasource(Datasource):
                     query=query,
                     **slice_kwargs,
                     # Do not fetch more documents than the row limit allows.
-                    size=chunk_size
-                    if remaining is None
-                    else min(chunk_size, remaining),
+                    size=(
+                        chunk_size if remaining is None else min(chunk_size, remaining)
+                    ),
                     search_after=search_after,
                     sort=["_shard_doc"],
                     seq_no_primary_term=True,
