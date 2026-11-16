@@ -29,12 +29,22 @@ class FakeElasticsearch:
     def msearch(self, body: Sequence[Mapping[str, Any]]) -> Any:
         return {"responses": [self.search(**search) for search in body[1::2]]}
 
-    def search(self, search_after: Optional[Any] = None, **kwargs: Any) -> Any:
+    def search(
+        self,
+        search_after: Optional[Any] = None,
+        slice: Optional[Mapping[str, int]] = None,
+        **kwargs: Any,
+    ) -> Any:
+        # Distribute the hits round-robin across slices.
+        hits = [
+            {**hit, "sort": [i]}
+            for i, hit in enumerate(self.hits)
+            if slice is None or i % slice["max"] == slice["id"]
+        ]
+        total = {"value": len(hits), "relation": "eq"}
         if search_after is not None:
-            return {"hits": {"hits": []}}
-        return {
-            "hits": {"hits": [{**hit, "sort": [i]} for i, hit in enumerate(self.hits)]}
-        }
+            return {"hits": {"total": total, "hits": []}}
+        return {"hits": {"total": total, "hits": hits}}
 
 
 @fixture
