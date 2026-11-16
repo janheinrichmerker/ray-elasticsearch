@@ -48,7 +48,7 @@ def read_table(datasource: ElasticsearchDatasource) -> Table:
     return concat_tables(
         [
             cast(Table, block)
-            for task in datasource.get_read_tasks(parallelism=1)
+            for task in datasource.get_read_tasks(parallelism=2)
             for block in task()
         ]
     )
