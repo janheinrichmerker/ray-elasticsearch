@@ -152,16 +152,12 @@ class ElasticsearchDatasource(Datasource):
 
     @cached_property
     def _num_rows(self) -> int:
-        return self._elasticsearch.count(
-            index=self._index_name,
-            body=(
-                {
-                    "query": self._query_dict,
-                }
-                if self._query_dict is not None
-                else {}
-            ),
-        )["count"]
+        return self._elasticsearch.search(
+            pit={"id": self._pit_id, "keep_alive": self._keep_alive},
+            query=self._query_dict,
+            size=0,
+            track_total_hits=True,
+        )["hits"]["total"]["value"]
 
     def num_rows(self) -> int:
         return self._num_rows
