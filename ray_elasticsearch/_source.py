@@ -181,8 +181,8 @@ class ElasticsearchDatasource(Datasource):
         pit_id: str,
         keep_alive: str,
         query: Optional[Mapping[str, Any]],
-        slice_id: int,
-        slice_max: int,
+        slice_id: Optional[int],
+        slice_max: Optional[int],
         num_rows: Optional[int],
         row_limit: Optional[int],
         chunk_size: int,
@@ -255,11 +255,17 @@ class ElasticsearchDatasource(Datasource):
             elasticsearch = Elasticsearch(**client_kwargs)
             search_after: Any = None
             remaining = row_limit
+            # Search the whole point in time if not sliced (Elasticsearch rejects a single slice).
+            slice_kwargs: dict[str, Any] = (
+                {"slice": {"id": slice_id, "max": slice_max}}
+                if slice_id is not None and slice_max is not None
+                else {}
+            )
             while remaining is None or remaining > 0:
                 response = elasticsearch.search(
                     pit={"id": pit_id, "keep_alive": keep_alive},
                     query=query,
-                    slice={"id": slice_id, "max": slice_max},
+                    **slice_kwargs,
                     # Do not fetch more documents than the row limit allows.
                     size=chunk_size
                     if remaining is None
@@ -298,12 +304,31 @@ class ElasticsearchDatasource(Datasource):
         per_task_row_limit: Optional[int] = None,
         data_context: Optional[DataContext] = None,
     ) -> list[ReadTask]:
-        # Elasticsearch rejects slicing into a single slice.
-        if parallelism < 2:
-            raise ValueError(
-                f"Parallelism must be at least 2 to slice the point in time, got {parallelism}."
-            )
+        if parallelism < 1:
+            raise ValueError(f"Parallelism must be at least 1, got {parallelism}.")
         pit_id = self._pit_id
+
+        if parallelism == 1:
+            # Elasticsearch rejects slicing into a single slice, so read the whole point in time in one unsliced task.
+            num_rows = self._num_rows
+            if per_task_row_limit is not None:
+                num_rows = min(num_rows, per_task_row_limit)
+            return [
+                self._get_read_task(
+                    pit_id=pit_id,
+                    keep_alive=self._keep_alive,
+                    query=self._query_dict,
+                    slice_id=None,
+                    slice_max=None,
+                    num_rows=num_rows,
+                    row_limit=per_task_row_limit,
+                    chunk_size=self._chunk_size,
+                    source_field_set=self._source_field_set,
+                    meta_field_set=self._meta_field_set,
+                    client_kwargs=self._client_kwargs,
+                    schema=self._safe_schema,
+                )
+            ]
 
         slice_count_search_bodies: list[Mapping[str, Any]] = [
             {
