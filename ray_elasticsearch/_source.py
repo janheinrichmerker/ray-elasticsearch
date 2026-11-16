@@ -178,6 +178,7 @@ class ElasticsearchDatasource(Datasource):
     @staticmethod
     def _get_read_task(
         pit_id: str,
+        keep_alive: str,
         query: Optional[Mapping[str, Any]],
         slice_id: int,
         slice_max: int,
@@ -292,6 +293,7 @@ class ElasticsearchDatasource(Datasource):
         return [
             self._get_read_task(
                 pit_id=pit_id,
+                keep_alive=self._keep_alive,
                 query=self._query_dict,
                 slice_id=i,
                 slice_max=parallelism,
