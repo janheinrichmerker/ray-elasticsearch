@@ -42,24 +42,24 @@ def _parse_date(value: Any) -> datetime:
 
 
 class ElasticsearchDatasource(Datasource):
-    _index: Optional[IndexType]
-    _query: Optional[QueryType]
+    _index: IndexType | None
+    _query: QueryType | None
     _keep_alive: str
     _chunk_size: int
-    _source_fields: Optional[Iterable[str]]
-    _meta_fields: Optional[Iterable[str]]
-    _schema: Optional[SchemaType]
+    _source_fields: Iterable[str] | None
+    _meta_fields: Iterable[str] | None
+    _schema: SchemaType | None
     _client_kwargs: dict[str, Any]
 
     def __init__(
         self,
-        index: Optional[IndexType] = None,
-        query: Optional[QueryType] = None,
+        index: IndexType | None = None,
+        query: QueryType | None = None,
         keep_alive: str = "5m",
         chunk_size: int = 1000,
-        source_fields: Optional[Iterable[str]] = None,
-        meta_fields: Optional[Iterable[str]] = None,
-        schema: Optional[SchemaType] = None,
+        source_fields: Iterable[str] | None = None,
+        meta_fields: Iterable[str] | None = None,
+        schema: SchemaType | None = None,
         **client_kwargs,
     ) -> None:
         super().__init__()
@@ -77,23 +77,23 @@ class ElasticsearchDatasource(Datasource):
         return Elasticsearch(**self._client_kwargs)
 
     @cached_property
-    def _index_name(self) -> Optional[str]:
+    def _index_name(self) -> str | None:
         return _index_name(self._index)
 
     @cached_property
-    def _source_field_set(self) -> Optional[AbstractSet[str]]:
+    def _source_field_set(self) -> AbstractSet[str] | None:
         if self._source_fields is None:
             return None
         return set(self._source_fields)
 
     @cached_property
-    def _meta_field_set(self) -> Optional[AbstractSet[str]]:
+    def _meta_field_set(self) -> AbstractSet[str] | None:
         if self._meta_fields is None:
             return None
         return set(self._meta_fields)
 
     @cached_property
-    def _query_dict(self) -> Optional[Mapping[str, Any]]:
+    def _query_dict(self) -> Mapping[str, Any] | None:
         if self._query is None:
             return None
         elif Query is not NotImplemented and isinstance(self._query, Query):
@@ -104,7 +104,7 @@ class ElasticsearchDatasource(Datasource):
             return None
 
     @cached_property
-    def _safe_schema(self) -> Optional[Schema]:
+    def _safe_schema(self) -> Schema | None:
         if self._schema is not None and isinstance(self._schema, Schema):
             return self._schema
 
@@ -141,7 +141,7 @@ class ElasticsearchDatasource(Datasource):
             meta_fields=self._meta_fields,
         )
 
-    def schema(self) -> Optional[Schema]:
+    def schema(self) -> Schema | None:
         return self._safe_schema
 
     @cached_property
@@ -164,7 +164,7 @@ class ElasticsearchDatasource(Datasource):
         return self._num_rows
 
     @cached_property
-    def _estimated_inmemory_data_size(self) -> Optional[int]:
+    def _estimated_inmemory_data_size(self) -> int | None:
         stats = self._elasticsearch.indices.stats(
             index=self._index_name,
             metric="store",
@@ -173,22 +173,22 @@ class ElasticsearchDatasource(Datasource):
             return None
         return stats["_all"]["total"]["store"]["total_data_set_size_in_bytes"]
 
-    def estimate_inmemory_data_size(self) -> Optional[int]:
+    def estimate_inmemory_data_size(self) -> int | None:
         return self._estimated_inmemory_data_size
 
     @staticmethod
     def _get_read_task(
         pit_id: str,
         keep_alive: str,
-        query: Optional[Mapping[str, Any]],
-        slice_id: Optional[int],
-        slice_max: Optional[int],
-        num_rows: Optional[int],
-        row_limit: Optional[int],
+        query: Mapping[str, Any] | None,
+        slice_id: int | None,
+        slice_max: int | None,
+        num_rows: int | None,
+        row_limit: int | None,
         chunk_size: int,
-        source_field_set: Optional[AbstractSet[str]],
-        meta_field_set: Optional[AbstractSet[str]],
-        schema: Optional[Schema],
+        source_field_set: AbstractSet[str] | None,
+        meta_field_set: AbstractSet[str] | None,
+        schema: Schema | None,
         client_kwargs: dict,
     ) -> ReadTask:
         if Version(ray_version) >= Version("2.47.0") or TYPE_CHECKING:
@@ -211,7 +211,8 @@ class ElasticsearchDatasource(Datasource):
             """
             Recursively transform a value according to the given Arrow data type.
 
-            For example, dates (e.g., ISO strings) are parsed at timestamp fields, which Arrow cannot convert by itself."""
+            For example, dates (e.g., ISO strings) are parsed at timestamp fields, which Arrow cannot convert by itself.
+            """
             if value is None:
                 return None
             elif is_timestamp(data_type):
@@ -301,8 +302,8 @@ class ElasticsearchDatasource(Datasource):
     def get_read_tasks(
         self,
         parallelism: int,
-        per_task_row_limit: Optional[int] = None,
-        data_context: Optional[DataContext] = None,
+        per_task_row_limit: int | None = None,
+        data_context: DataContext | None = None,
     ) -> list[ReadTask]:
         if parallelism < 1:
             raise ValueError(f"Parallelism must be at least 1, got {parallelism}.")
@@ -345,7 +346,7 @@ class ElasticsearchDatasource(Datasource):
         slice_count_searches = list(
             chain.from_iterable(zip(repeat({}), slice_count_search_bodies))
         )
-        slice_counts: list[Optional[int]] = [
+        slice_counts: list[int | None] = [
             response["hits"]["total"]["value"] if "error" not in response else None
             for response in self._elasticsearch.msearch(body=slice_count_searches)[
                 "responses"

@@ -42,11 +42,11 @@ def _sort_data_type(field: DataType) -> DataType:
 
 def _sort_schema(s: Schema) -> Schema:
     fields = _sort_fields(s)
-    metadata = cast(dict[Union[bytes, str], Union[bytes, str]], s.metadata)
+    metadata = cast(dict[bytes | str, bytes | str], s.metadata)
     return schema(fields, metadata)
 
 
-def _assert_schema_equals(a: Optional[Schema], b: Optional[Schema]) -> None:
+def _assert_schema_equals(a: Schema | None, b: Schema | None) -> None:
     if a is None or b is None:
         assert a == b
         return
@@ -191,7 +191,7 @@ def test_pydantic_schema() -> Any:
 
     class _Document(BaseDocument):
         field1: str
-        field2: Optional[list[str]]
+        field2: list[str] | None
 
     datasource = ElasticsearchDatasource(index=_Document)
 
@@ -219,7 +219,7 @@ def test_pydantic_schema_with_source_fields() -> Any:
 
     class _Document(BaseDocument):
         field1: str
-        field2: Optional[list[str]]
+        field2: list[str] | None
 
     datasource = ElasticsearchDatasource(
         index=_Document,

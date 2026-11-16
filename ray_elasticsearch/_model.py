@@ -8,9 +8,9 @@ from ray_elasticsearch._compat import Document, Query
 if (Document is not NotImplemented and Query is not NotImplemented) or TYPE_CHECKING:
     from ray_elasticsearch._compat import Document, Query
 
-    IndexType: TypeAlias = Union[type[Document], str]
-    QueryType: TypeAlias = Union[Query, Mapping[str, Any]]
-    SchemaType: TypeAlias = Union[Schema, type[Document]]
+    IndexType: TypeAlias = type[Document] | str
+    QueryType: TypeAlias = Query | Mapping[str, Any]
+    SchemaType: TypeAlias = Schema | type[Document]
 else:
     IndexType: TypeAlias = str
     QueryType: TypeAlias = Mapping[str, Any]

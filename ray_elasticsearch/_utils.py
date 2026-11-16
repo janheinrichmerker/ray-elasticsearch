@@ -8,7 +8,7 @@ from ray_elasticsearch._compat import Document
 from ray_elasticsearch._model import IndexType
 
 
-def _index_name(index: Optional[IndexType]) -> Optional[str]:
+def _index_name(index: IndexType | None) -> str | None:
     """
     Get the index name from an index name or document class.
     """

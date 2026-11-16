@@ -22,28 +22,28 @@ from ray_elasticsearch._utils import _batch_to_table, _index_name
 
 
 class ElasticsearchDatasink(Datasink):
-    _index: Optional[IndexType]
-    _op_type: Optional[OpType]
+    _index: IndexType | None
+    _op_type: OpType | None
     _chunk_size: int
-    _source_fields: Optional[Iterable[str]]
-    _meta_fields: Optional[Iterable[str]]
+    _source_fields: Iterable[str] | None
+    _meta_fields: Iterable[str] | None
     _max_chunk_bytes: int
     _max_retries: int
-    _initial_backoff: Union[float, int]
-    _max_backoff: Union[float, int]
+    _initial_backoff: float
+    _max_backoff: float
     _client_kwargs: dict[str, Any]
 
     def __init__(
         self,
-        index: Optional[IndexType] = None,
-        op_type: Optional[OpType] = None,
+        index: IndexType | None = None,
+        op_type: OpType | None = None,
         chunk_size: int = 500,
-        source_fields: Optional[Iterable[str]] = None,
-        meta_fields: Optional[Iterable[str]] = None,
+        source_fields: Iterable[str] | None = None,
+        meta_fields: Iterable[str] | None = None,
         max_chunk_bytes: int = 100 * 1024 * 1024,
         max_retries: int = 0,
-        initial_backoff: Union[float, int] = 2,
-        max_backoff: Union[float, int] = 600,
+        initial_backoff: float = 2,
+        max_backoff: float = 600,
         **client_kwargs,
     ) -> None:
         super().__init__()
@@ -63,22 +63,22 @@ class ElasticsearchDatasink(Datasink):
         return Elasticsearch(**self._client_kwargs)
 
     @cached_property
-    def _index_name(self) -> Optional[str]:
+    def _index_name(self) -> str | None:
         return _index_name(self._index)
 
     @cached_property
-    def _source_field_set(self) -> Optional[AbstractSet[str]]:
+    def _source_field_set(self) -> AbstractSet[str] | None:
         if self._source_fields is None:
             return None
         return set(self._source_fields)
 
     @cached_property
-    def _meta_field_set(self) -> Optional[AbstractSet[str]]:
+    def _meta_field_set(self) -> AbstractSet[str] | None:
         if self._meta_fields is None:
             return None
         return set(self._meta_fields)
 
-    def _transform_row(self, row: Mapping[str, Any]) -> Dict[str, Any]:
+    def _transform_row(self, row: Mapping[str, Any]) -> dict[str, Any]:
         meta = {key: value for key, value in row.items() if key.startswith("_")}
         if self._meta_field_set is not None:
             meta = {
@@ -144,5 +144,5 @@ class ElasticsearchDatasink(Datasink):
         return True
 
     @property
-    def num_rows_per_write(self) -> Optional[int]:
+    def num_rows_per_write(self) -> int | None:
         return self._chunk_size

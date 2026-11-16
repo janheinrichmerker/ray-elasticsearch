@@ -31,8 +31,8 @@ class FakeElasticsearch:
 
     def search(
         self,
-        search_after: Optional[Any] = None,
-        slice: Optional[Mapping[str, int]] = None,
+        search_after: Any | None = None,
+        slice: Mapping[str, int] | None = None,
         size: int = 10,
         **kwargs: Any,
     ) -> Any:

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from typing import Any
 
 from pytest import MonkeyPatch, mark, raises, skip
 
@@ -41,7 +41,7 @@ _UTC = timezone.utc
 )
 def test_read_date(
     fake_elasticsearch: type[FakeElasticsearch],
-    format: Optional[str],
+    format: str | None,
     value: Any,
     expected: Any,
 ) -> None:

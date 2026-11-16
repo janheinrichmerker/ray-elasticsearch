@@ -69,8 +69,8 @@ _DATE_FORMATS = frozenset(
 
 def complete_schema(
     base_schema: Schema,
-    source_fields: Optional[Iterable[str]] = None,
-    meta_fields: Optional[Iterable[str]] = None,
+    source_fields: Iterable[str] | None = None,
+    meta_fields: Iterable[str] | None = None,
 ) -> Schema:
     source_field_names = (
         set(source_fields) if source_fields is not None else set(base_schema.names)
@@ -108,7 +108,7 @@ class _PropertyDict(TypedDict):
 _PropertiesDict: TypeAlias = dict[str, _PropertyDict]
 
 
-def schema_from_document(document: Union[type[Document], type[InnerDoc]]) -> Schema:
+def schema_from_document(document: type[Document] | type[InnerDoc]) -> Schema:
     """
     Derive a PyArrow schema from an elasticsearch-dsl Document class.
 
